@@ -4,10 +4,104 @@ class Servicio
 {
     private $conexion;
 
-    public function __construct($conexion)
-    {
+    private $nombre;
+    private $descripcion;
+    private $precio;
+    private $duracionMinutos;
+
+    public function __construct(
+        $conexion,
+        $nombre = '',
+        $descripcion = '',
+        $precio = 0,
+        $duracionMinutos = 0
+    ) {
         $this->conexion = $conexion;
+
+        if ($nombre !== '') {
+            $this->setNombre($nombre);
+        }
+
+        if ($descripcion !== '') {
+            $this->setDescripcion($descripcion);
+        }
+
+        if ($precio > 0) {
+            $this->setPrecio($precio);
+        }
+
+        if ($duracionMinutos > 0) {
+            $this->setDuracionMinutos($duracionMinutos);
+        }
     }
+
+    public function setNombre($nombre)
+    {
+        if (trim($nombre) === '') {
+            throw new InvalidArgumentException(
+                'El nombre no puede estar vacío.'
+            );
+        }
+
+        $this->nombre = $nombre;
+    }
+
+    public function getNombre()
+    {
+        return $this->nombre;
+    }
+
+
+    public function setDescripcion($descripcion)
+    {
+        if (trim($descripcion) === '') {
+            throw new InvalidArgumentException(
+                'La descripción no puede estar vacía.'
+            );
+        }
+
+        $this->descripcion = $descripcion;
+    }
+
+    public function getDescripcion()
+    {
+        return $this->descripcion;
+    }
+
+
+    public function setPrecio($precio)
+    {
+        if ($precio <= 0) {
+            throw new InvalidArgumentException(
+                'El precio debe ser mayor que cero.'
+            );
+        }
+
+        $this->precio = $precio;
+    }
+
+    public function getPrecio()
+    {
+        return $this->precio;
+    }
+
+
+    public function setDuracionMinutos($duracionMinutos)
+    {
+        if ($duracionMinutos <= 0) {
+            throw new InvalidArgumentException(
+                'La duración debe ser mayor que cero.'
+            );
+        }
+
+        $this->duracionMinutos = $duracionMinutos;
+    }
+
+    public function getDuracionMinutos()
+    {
+        return $this->duracionMinutos;
+    }
+
 
     public function obtenerTodos()
     {
@@ -167,3 +261,4 @@ class Servicio
         }
     }
 }
+?>

@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../apps/models/ServicioEspecial.php';
+require_once __DIR__ . '/../apps/models/Servicio.php';
 
-$servicio = new ServicioEspecial(
+
+$servicio = new Servicio(
     'Atención preferencial',
     'Servicio especial para clientes que requieren atención prioritaria.',
     85000.0,

@@ -22,7 +22,6 @@ $stmtPasajero->execute();
 $pasajeros = $stmtPasajero->fetchAll(PDO::FETCH_ASSOC);
 
 
-// SERVICIO CONSULTADO - SOLO 1 REGISTRO
 $sqlServicio = "SELECT * FROM servicios LIMIT 1";
 $stmtServicio = $conexion->prepare($sqlServicio);
 $stmtServicio->execute();
