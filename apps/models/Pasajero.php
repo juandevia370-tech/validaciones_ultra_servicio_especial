@@ -9,6 +9,37 @@ class Pasajero
         $this->conexion = $conexion;
     }
 
+    public function guardar($nombre, $documento, $telefono, $clienteId)
+    {
+        try {
+            $nombre = trim($nombre);
+            $documento = trim($documento);
+            $telefono = trim($telefono);
+            $clienteId = filter_var($clienteId, FILTER_VALIDATE_INT);
+
+            if ($clienteId === false || $clienteId < 1) {
+                throw new InvalidArgumentException('El ID del cliente no es válido.');
+            }
+
+            $sql = 'INSERT INTO pasajeros (nombre, documento, telefono, cliente_id)
+                    VALUES (:nombre, :documento, :telefono, :cliente_id)';
+            $consulta = $this->conexion->prepare($sql);
+            $consulta->bindParam(':nombre', $nombre);
+            $consulta->bindParam(':documento', $documento);
+            $consulta->bindParam(':telefono', $telefono);
+            $consulta->bindParam(':cliente_id', $clienteId, PDO::PARAM_INT);
+
+            if (!$consulta->execute()) {
+                return false;
+            }
+
+            return $this->obtenerTodos();
+        } catch (PDOException $e) {
+            error_log('Error al guardar el pasajero: ' . $e->getMessage());
+            return false;
+        }
+    }
+
     public function obtenerTodos()
     {
         try {
@@ -73,11 +104,6 @@ class Pasajero
                 PDO::FETCH_ASSOC
             );
 
-            if (!$pasajero) {
-                throw new Exception(
-                    "Pasajero no encontrado."
-                );
-            }
 
             return $pasajero;
 

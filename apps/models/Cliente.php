@@ -9,6 +9,33 @@ class Cliente
         $this->conexion = $conexion;
     }
 
+    public function guardar($nombre, $documento, $correo, $telefono)
+    {
+        try {
+            $nombre = trim($nombre);
+            $documento = trim($documento);
+            $correo = trim($correo);
+            $telefono = trim($telefono);
+
+            $sql = 'INSERT INTO clientes (nombre, documento, correo, telefono)
+                    VALUES (:nombre, :documento, :correo, :telefono)';
+            $consulta = $this->conexion->prepare($sql);
+            $consulta->bindParam(':nombre', $nombre);
+            $consulta->bindParam(':documento', $documento);
+            $consulta->bindParam(':correo', $correo);
+            $consulta->bindParam(':telefono', $telefono);
+
+            if (!$consulta->execute()) {
+                return false;
+            }
+
+            return $this->obtenerTodos();
+        } catch (PDOException $e) {
+            error_log('Error al guardar el cliente: ' . $e->getMessage());
+            return false;
+        }
+    }
+
     public function obtenerTodos()
     {
         try {

@@ -102,6 +102,59 @@ class Servicio
         return $this->duracionMinutos;
     }
 
+    public function guardar($clienteId, $pasajeroId, $conductorId, $vehiculoId, $destinoId, $fecha, $hora, $estado)
+    {
+        $ids = [
+            'cliente' => &$clienteId,
+            'pasajero' => &$pasajeroId,
+            'conductor' => &$conductorId,
+            'vehículo' => &$vehiculoId,
+            'destino' => &$destinoId
+        ];
+
+        foreach ($ids as $nombre => &$id) {
+            $id = filter_var($id, FILTER_VALIDATE_INT);
+            if ($id === false || $id < 1) {
+                throw new InvalidArgumentException('El ID de ' . $nombre . ' no es válido.');
+            }
+        }
+        unset($id);
+
+        $fecha = trim($fecha);
+        $hora = trim($hora);
+        $estado = trim($estado);
+        if ($fecha === '' || $hora === '' || $estado === '') {
+            throw new InvalidArgumentException('Completa la fecha, hora y estado del servicio.');
+        }
+
+        try {
+            $sql = 'INSERT INTO servicios
+                        (cliente_id, pasajero_id, conductor_id, vehiculo_id, destino_id,
+                         fecha_servicio, hora_servicio, estado)
+                    VALUES
+                        (:cliente_id, :pasajero_id, :conductor_id, :vehiculo_id, :destino_id,
+                         :fecha_servicio, :hora_servicio, :estado)';
+            $consulta = $this->conexion->prepare($sql);
+            $consulta->bindParam(':cliente_id', $clienteId, PDO::PARAM_INT);
+            $consulta->bindParam(':pasajero_id', $pasajeroId, PDO::PARAM_INT);
+            $consulta->bindParam(':conductor_id', $conductorId, PDO::PARAM_INT);
+            $consulta->bindParam(':vehiculo_id', $vehiculoId, PDO::PARAM_INT);
+            $consulta->bindParam(':destino_id', $destinoId, PDO::PARAM_INT);
+            $consulta->bindParam(':fecha_servicio', $fecha);
+            $consulta->bindParam(':hora_servicio', $hora);
+            $consulta->bindParam(':estado', $estado);
+
+            if (!$consulta->execute()) {
+                return false;
+            }
+
+            return $this->obtenerTodos();
+        } catch (PDOException $e) {
+            error_log('Error al guardar el servicio: ' . $e->getMessage());
+            return false;
+        }
+    }
+
 
     public function obtenerTodos()
     {

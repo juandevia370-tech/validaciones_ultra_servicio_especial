@@ -9,6 +9,33 @@ class Conductor
         $this->conexion = $conexion;
     }
 
+    public function guardar($nombre, $documento, $licencia, $telefono)
+    {
+        try {
+            $nombre = trim($nombre);
+            $documento = trim($documento);
+            $licencia = trim($licencia);
+            $telefono = trim($telefono);
+
+        $sql = 'INSERT INTO conductores (nombre, documento, licencia, telefono)
+                VALUES (:nombre, :documento, :licencia, :telefono)';
+        $consulta = $this->conexion->prepare($sql);
+        $consulta->bindParam(':nombre', $nombre);
+        $consulta->bindParam(':documento', $documento);
+        $consulta->bindParam(':licencia', $licencia);
+        $consulta->bindParam(':telefono', $telefono);
+
+            if (!$consulta->execute()) {
+                return false;
+            }
+
+            return $this->obtenerTodos();
+        }catch (PDOException $e) {
+            echo "Error al guardar el conductor: " . $e->getMessage();
+            return false;
+        }
+    }
+
     public function obtenerTodos()
     {
         try {

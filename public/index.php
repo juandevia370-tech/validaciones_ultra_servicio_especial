@@ -1,80 +1,43 @@
 <?php
 
-declare(strict_types=1);
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../apps/controllers/ClienteController.php';
+require_once __DIR__ . '/../apps/controllers/ConductorController.php';
+require_once __DIR__ . '/../apps/controllers/PasajeroController.php';
+require_once __DIR__ . '/../apps/controllers/ServicioControoller.php';
 
-require_once __DIR__ . '/../apps/models/Servicio.php';
+$method = $_SERVER['REQUEST_METHOD'];
+$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
-
-$servicio = new Servicio(
-    'Atención preferencial',
-    'Servicio especial para clientes que requieren atención prioritaria.',
-    85000.0,
-    60
-);
-
-$mensajesValidacion = [];
-
-function probarValidacion(callable $setter, string $descripcion, array &$mensajesValidacion): void
-{
-    try {
-        $setter();
-        $mensajesValidacion[] = "Correcto: {$descripcion}";
-    } catch (InvalidArgumentException $exception) {
-        $mensajesValidacion[] = "Validación aplicada: {$exception->getMessage()}";
-    }
+if ($method === 'GET' && $uri === '/') {
+    ?>
+    <a href="/cliente/crear">Formulario de Cliente</a>
+    <a href="/conductor/crear">Formulario de Conductor</a>
+    <a href="/pasajero/crear">Formulario de Pasajero</a>
+    <a href="/servicio/crear">Formulario de Servicio</a>
+    <?php
+    exit;
 }
 
-// Prueba de setters con datos válidos.
-$servicio->setNombre('Servicio premium de atención');
-$servicio->setDescripcion('Atención prioritaria con seguimiento personalizado.');
-$servicio->setPrecio(95000.0);
-$servicio->setDuracionMinutos(90);
+if ($uri === '/cliente/crear') {
+    $controlador = new ClienteController($conexion);
+} elseif ($uri === '/conductor/crear') {
+    $controlador = new ConductorController($conexion);
+} elseif ($uri === '/pasajero/crear') {
+    $controlador = new PasajeroController($conexion);
+} elseif ($uri === '/servicio/crear') {
+    $controlador = new ServicioController($conexion);
+} else {
+    http_response_code(404);
+    exit('Página no encontrada.');
+}
 
-// Prueba de las validaciones con datos no permitidos.
-probarValidacion(
-    fn() => $servicio->setNombre(''),
-    'el nombre fue aceptado',
-    $mensajesValidacion
-);
-probarValidacion(
-    fn() => $servicio->setDescripcion(''),
-    'la descripción fue aceptada',
-    $mensajesValidacion
-);
-probarValidacion(
-    fn() => $servicio->setPrecio(0),
-    'el precio fue aceptado',
-    $mensajesValidacion
-);
-probarValidacion(
-    fn() => $servicio->setDuracionMinutos(-10),
-    'la duración fue aceptada',
-    $mensajesValidacion
-);
-?>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Validaciones del servicio especial</title>
-</head>
-<body>
-    <h1>Servicio especial</h1>
+if ($method === 'GET') {
+    $controlador->crear();
+} elseif ($method === 'POST') {
+    $controlador->resultado($controlador->guardar());
+} else {
+    http_response_code(405);
+}
 
-    <h2>Información del objeto</h2>
-    <ul>
-        <li><strong>Nombre:</strong> <?= htmlspecialchars($servicio->getNombre(), ENT_QUOTES, 'UTF-8') ?></li>
-        <li><strong>Descripción:</strong> <?= htmlspecialchars($servicio->getDescripcion(), ENT_QUOTES, 'UTF-8') ?></li>
-        <li><strong>Precio:</strong> $<?= number_format($servicio->getPrecio(), 2, ',', '.') ?></li>
-        <li><strong>Duración:</strong> <?= $servicio->getDuracionMinutos() ?> minutos</li>
-    </ul>
 
-    <h2>Resultado de las validaciones</h2>
-    <ul>
-        <?php foreach ($mensajesValidacion as $mensaje): ?>
-            <li><?= htmlspecialchars($mensaje, ENT_QUOTES, 'UTF-8') ?></li>
-        <?php endforeach; ?>
-    </ul>
-</body>
-</html>
