@@ -45,14 +45,23 @@ Cuando un dato no cumple una regla, el setter lanza una excepcion `InvalidArgume
 ```text
 validaciones_ultra_servicio_especial/
 ├── apps/
-│   └── models/
-│       └── ServicioEspecial.php
-├── docs/
-│   └── actividad.md
+│   ├── controllers/
+│   ├── models/
+│   └── views/
+│       └── auth/
+│           ├── login.php
+│           └── registro.php
 ├── public/
+│   ├── css/
+│   │   └── auth/
+│   │       ├── login.css
+│   │       └── registro.css
 │   └── index.php
+├── docs/
 └── README.md
 ```
+
+Las vistas de inicio de sesión y registro contienen únicamente la interfaz; todavía no están conectadas a controladores ni procesan credenciales.
 
 ## Archivos principales
 
