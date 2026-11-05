@@ -85,14 +85,25 @@ Contiene las respuestas a las preguntas previas de la actividad de apropiacion.
 ## Ejecucion con XAMPP
 
 1. Ubicar el proyecto dentro de la carpeta `htdocs` de XAMPP.
-2. Iniciar el servicio Apache desde el panel de control de XAMPP.
-3. Abrir en el navegador:
+2. Iniciar Apache y MySQL desde el panel de control de XAMPP.
+3. Abrir el proyecto en:
 
 ```text
-http://localhost/validaciones_ultra_servicio_especial/public/
+http://localhost/login
 ```
 
-La pagina mostrara la informacion valida del servicio y el resultado de cada validacion aplicada.
+El Apache local está configurado para usar la carpeta `public` como raíz del sitio. Inicia sesión con un usuario creado en Supabase Auth.
+
+## Módulos del sistema
+
+Después de iniciar sesión se puede seleccionar y administrar cualquiera de las tablas existentes en la base `sistema_transporte`: clientes, conductores, pasajeros, servicios, destinos y vehículos. Cada módulo permite consultar, crear, editar y eliminar registros.
+
+## Configuración de Supabase Auth
+
+- La URL del proyecto y la clave pública se configuran en `config/supabase.php` y `public/js/auth/config.js`.
+- PHP verifica el token de acceso con Supabase antes de permitir el acceso a las rutas protegidas. La sesión de la aplicación usa una cookie `HttpOnly`.
+- Crea usuarios de prueba desde el panel de Supabase Auth. No se necesita publicar ni copiar una clave `service_role`; nunca debe agregarse al navegador ni al repositorio.
+- El login requiere conexión con Supabase y la extensión cURL habilitada en PHP.
 
 ## Comprobacion por consola
 

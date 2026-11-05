@@ -3,9 +3,11 @@ $e = static function ($valor): string {
     return htmlspecialchars((string) ($valor ?? ''), ENT_QUOTES, 'UTF-8');
 };
 ?>
+<link rel="stylesheet" href="<?= htmlspecialchars(app_url('/css/app.css'), ENT_QUOTES, 'UTF-8') ?>">
+<main class="crud-page">
 <h2>Editar cliente #<?= (int) $cliente['id'] ?></h2>
 
-<form method="post" action="/cliente/editar">
+<form class="crud-form" method="post" action="<?= htmlspecialchars(app_url('/cliente/actualizar'), ENT_QUOTES, 'UTF-8') ?>">
     <input type="hidden" name="id" value="<?= (int) $cliente['id'] ?>">
 
     <label for="cliente_nombre">Nombre</label>
@@ -21,5 +23,6 @@ $e = static function ($valor): string {
     <input type="tel" id="cliente_telefono" name="telefono" value="<?= $e($cliente['telefono']) ?>" placeholder="Número de teléfono" required>
 
     <button type="submit">Guardar cambios</button>
-    <a href="/">Cancelar</a>
+    <a href="<?= htmlspecialchars(app_url('/'), ENT_QUOTES, 'UTF-8') ?>">Cancelar</a>
 </form>
+</main>

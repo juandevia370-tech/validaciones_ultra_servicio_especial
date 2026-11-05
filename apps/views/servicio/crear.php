@@ -1,22 +1,49 @@
+<link rel="stylesheet" href="<?= htmlspecialchars(app_url('/css/app.css'), ENT_QUOTES, 'UTF-8') ?>">
+<main class="crud-page">
 <h2>Formulario de servicio</h2>
 
-<form method="post">
+<form class="crud-form" method="post">
     <input type="hidden" name="entidad" value="servicio">
 
-    <label for="cliente_id">ID del cliente</label>
-    <input type="number" id="cliente_id" name="cliente_id" min="1" placeholder="ID del cliente" required>
+    <label for="cliente_id">Cliente</label>
+    <select id="cliente_id" name="cliente_id" required>
+        <option value="">Selecciona un cliente</option>
+        <?php foreach ($clientes as $cliente): ?>
+            <option value="<?= (int) $cliente['id'] ?>"><?= htmlspecialchars($cliente['nombre'], ENT_QUOTES, 'UTF-8') ?></option>
+        <?php endforeach; ?>
+    </select>
 
-    <label for="pasajero_id">ID del pasajero</label>
-    <input type="number" id="pasajero_id" name="pasajero_id" min="1" placeholder="ID del pasajero" required>
+    <label for="pasajero_id">Pasajero</label>
+    <select id="pasajero_id" name="pasajero_id" required>
+        <option value="">Selecciona un pasajero</option>
+        <?php foreach ($pasajeros as $pasajero): ?>
+            <option value="<?= (int) $pasajero['id'] ?>"><?= htmlspecialchars($pasajero['nombre'], ENT_QUOTES, 'UTF-8') ?></option>
+        <?php endforeach; ?>
+    </select>
 
-    <label for="conductor_id">ID del conductor</label>
-    <input type="number" id="conductor_id" name="conductor_id" min="1" placeholder="ID del conductor" required>
+    <label for="conductor_id">Conductor</label>
+    <select id="conductor_id" name="conductor_id" required>
+        <option value="">Selecciona un conductor</option>
+        <?php foreach ($conductores as $conductor): ?>
+            <option value="<?= (int) $conductor['id'] ?>"><?= htmlspecialchars($conductor['nombre'], ENT_QUOTES, 'UTF-8') ?></option>
+        <?php endforeach; ?>
+    </select>
 
-    <label for="vehiculo_id">ID del vehículo</label>
-    <input type="number" id="vehiculo_id" name="vehiculo_id" min="1" placeholder="ID del vehículo" required>
+    <label for="vehiculo_id">Vehículo</label>
+    <select id="vehiculo_id" name="vehiculo_id" required>
+        <option value="">Selecciona un vehículo</option>
+        <?php foreach ($vehiculos as $vehiculo): ?>
+            <option value="<?= (int) $vehiculo['id'] ?>"><?= htmlspecialchars($vehiculo['placa'] . ' - ' . $vehiculo['marca'] . ' ' . $vehiculo['modelo'], ENT_QUOTES, 'UTF-8') ?></option>
+        <?php endforeach; ?>
+    </select>
 
-    <label for="destino_id">ID del destino</label>
-    <input type="number" id="destino_id" name="destino_id" min="1" placeholder="ID del destino" required>
+    <label for="destino_id">Destino</label>
+    <select id="destino_id" name="destino_id" required>
+        <option value="">Selecciona un destino</option>
+        <?php foreach ($destinos as $destino): ?>
+            <option value="<?= (int) $destino['id'] ?>"><?= htmlspecialchars($destino['ciudad_origen'] . ' - ' . $destino['ciudad_destino'], ENT_QUOTES, 'UTF-8') ?></option>
+        <?php endforeach; ?>
+    </select>
 
     <label for="fecha_servicio">Fecha del servicio</label>
     <input type="date" id="fecha_servicio" name="fecha_servicio" placeholder="Fecha del servicio" required>
@@ -29,3 +56,4 @@
 
     <button type="submit">Guardar servicio</button>
 </form>
+</main>

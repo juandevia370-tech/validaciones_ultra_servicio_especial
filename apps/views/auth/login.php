@@ -3,25 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#102a43">
+    <meta name="theme-color" content="#f2f6f8">
     <title>Iniciar sesión | Ultra Servicio Especial</title>
-    <link rel="stylesheet" href="../../../public/css/auth/login.css">
+    <link rel="stylesheet" href="<?= htmlspecialchars(app_url('/css/app.css'), ENT_QUOTES, 'UTF-8') ?>">
 </head>
-<body>
+<body data-base-path="<?= htmlspecialchars(APP_BASE_PATH, ENT_QUOTES, 'UTF-8') ?>">
     <main class="auth-page">
         <section class="auth-card" aria-labelledby="login-title">
-            <a class="brand" href="../../../public/" aria-label="Ir al inicio">
-                <span class="brand-mark" aria-hidden="true">U</span>
+            <a class="auth-brand" href="<?= htmlspecialchars(app_url('/login'), ENT_QUOTES, 'UTF-8') ?>">
+                <span class="auth-brand-mark" aria-hidden="true">U</span>
                 <span>Ultra <strong>Servicio Especial</strong></span>
             </a>
 
-            <div class="auth-heading">
-                <p class="eyebrow">Qué bueno tenerte de vuelta</p>
-                <h1 id="login-title">Inicia sesión</h1>
-                <p class="subtitle">Ingresa tus datos para continuar.</p>
-            </div>
+            <header class="auth-heading">
+                <p class="auth-eyebrow">Sistema de transporte</p>
+                <h1 id="login-title">Bienvenido de nuevo</h1>
+                <p class="auth-subtitle">Ingresa con la cuenta autorizada para administrar tus servicios.</p>
+            </header>
 
-            <form class="auth-form" method="post">
+            <p class="auth-message" id="login-message" role="alert" aria-live="polite" hidden></p>
+
+            <form class="auth-form" id="login-form">
                 <div class="form-field">
                     <label for="correo">Correo electrónico</label>
                     <input
@@ -29,7 +31,8 @@
                         id="correo"
                         name="correo"
                         placeholder="nombre@correo.com"
-                        autocomplete="email"
+                        autocomplete="username"
+                        inputmode="email"
                         required
                     >
                 </div>
@@ -42,30 +45,22 @@
                         name="contrasena"
                         placeholder="Ingresa tu contraseña"
                         autocomplete="current-password"
+                        minlength="6"
                         required
                     >
                 </div>
 
-                <div class="form-options">
-                    <label class="checkbox-label" for="recordarme">
-                        <input type="checkbox" id="recordarme" name="recordarme">
-                        <span>Recordarme</span>
-                    </label>
-                    <a class="text-link" href="#">¿Olvidaste tu contraseña?</a>
-                </div>
-
-                <button class="submit-button" type="submit">Entrar a mi cuenta</button>
+                <button class="auth-submit" id="login-submit" type="submit">Iniciar sesión</button>
             </form>
 
-            <p class="auth-footer">
-                ¿Aún no tienes una cuenta?
-                <a class="text-link" href="registro.php">Regístrate</a>
-            </p>
-
-            <p class="security-note">
-                Tus datos se mantienen protegidos y son de uso personal.
+            <p class="auth-note">
+                Acceso protegido con Supabase Auth. Si aún no tienes usuario, solicítalo al administrador del proyecto.
             </p>
         </section>
     </main>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="<?= htmlspecialchars(app_url('/js/auth/config.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="<?= htmlspecialchars(app_url('/js/auth/supabase.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="<?= htmlspecialchars(app_url('/js/auth/login.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
 </body>
 </html>

@@ -79,7 +79,16 @@ class ClienteController
             $_POST['telefono'] ?? ''
         );
 
-        header('Location: /?msg=' . ($ok ? 'editado' : 'error'));
+        header('Location: ' . app_url('/?msg=' . ($ok ? 'editado' : 'error')));
         exit;
     }
+
+    public function eliminar()
+    {
+        $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
+        $ok = $id && $id > 0 && $this->clienteModel->eliminar($id);
+
+        header('Location: ' . app_url('/?msg=' . ($ok ? 'eliminado' : 'error')));
+        exit;
     }
+}

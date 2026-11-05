@@ -1,6 +1,8 @@
+<link rel="stylesheet" href="<?= htmlspecialchars(app_url('/css/app.css'), ENT_QUOTES, 'UTF-8') ?>">
+<main class="crud-page">
 <h2>Formulario de conductor</h2>
 
-<form method="post">
+<form class="crud-form" method="post">
     <input type="hidden" name="entidad" value="conductor">
 
     <label for="conductor_nombre">Nombre</label>
@@ -17,3 +19,4 @@
 
     <button type="submit">Guardar conductor</button>
 </form>
+</main>

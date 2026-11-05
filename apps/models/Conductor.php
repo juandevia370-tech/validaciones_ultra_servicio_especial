@@ -99,4 +99,40 @@ class Conductor
             return null;
         }
     }
+
+    public function actualizar($id, $nombre, $documento, $licencia, $telefono)
+    {
+        try {
+            $sql = 'UPDATE conductores
+                    SET nombre = :nombre, documento = :documento,
+                        licencia = :licencia, telefono = :telefono
+                    WHERE id = :id';
+
+            return $this->conexion->prepare($sql)->execute([
+                ':nombre' => trim($nombre),
+                ':documento' => trim($documento),
+                ':licencia' => trim($licencia),
+                ':telefono' => trim($telefono),
+                ':id' => (int) $id,
+            ]);
+        } catch (PDOException $e) {
+            error_log('Error al actualizar el conductor: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function eliminar($id)
+    {
+        try {
+            $consulta = $this->conexion->prepare(
+                'DELETE FROM conductores WHERE id = :id'
+            );
+            $consulta->execute([':id' => (int) $id]);
+
+            return $consulta->rowCount() > 0;
+        } catch (PDOException $e) {
+            error_log('Error al eliminar el conductor: ' . $e->getMessage());
+            return false;
+        }
+    }
 }

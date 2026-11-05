@@ -57,6 +57,21 @@ class Cliente
         }
     }
 
+    public function eliminar($id)
+    {
+        try {
+            $consulta = $this->conexion->prepare(
+                'DELETE FROM clientes WHERE id = :id'
+            );
+            $consulta->execute([':id' => (int) $id]);
+
+            return $consulta->rowCount() > 0;
+        } catch (PDOException $e) {
+            error_log('Error al eliminar el cliente: ' . $e->getMessage());
+            return false;
+        }
+    }
+
     public function obtenerTodos()
     {
         try {
