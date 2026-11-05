@@ -69,6 +69,47 @@ class Pasajero
         }
     }
 
+    public function actualizar($id, $nombre, $documento, $telefono, $clienteId)
+    {
+        try {
+            $clienteId = filter_var($clienteId, FILTER_VALIDATE_INT);
+            if ($clienteId === false || $clienteId < 1) {
+                return false;
+            }
+
+            $sql = 'UPDATE pasajeros
+                    SET nombre = :nombre, documento = :documento,
+                        telefono = :telefono, cliente_id = :cliente_id
+                    WHERE id = :id';
+
+            return $this->conexion->prepare($sql)->execute([
+                ':nombre' => trim($nombre),
+                ':documento' => trim($documento),
+                ':telefono' => trim($telefono),
+                ':cliente_id' => $clienteId,
+                ':id' => (int) $id,
+            ]);
+        } catch (PDOException $e) {
+            error_log('Error al actualizar el pasajero: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function eliminar($id)
+    {
+        try {
+            $consulta = $this->conexion->prepare(
+                'DELETE FROM pasajeros WHERE id = :id'
+            );
+            $consulta->execute([':id' => (int) $id]);
+
+            return $consulta->rowCount() > 0;
+        } catch (PDOException $e) {
+            error_log('Error al eliminar el pasajero: ' . $e->getMessage());
+            return false;
+        }
+    }
+
     public function getById($id)
     {
         try {
@@ -84,6 +125,7 @@ class Pasajero
                         pasajeros.nombre,
                         pasajeros.documento,
                         pasajeros.telefono,
+                        pasajeros.cliente_id,
                         clientes.nombre AS cliente
                     FROM pasajeros
                     LEFT JOIN clientes

@@ -1,6 +1,8 @@
+<link rel="stylesheet" href="<?= htmlspecialchars(app_url('/css/app.css'), ENT_QUOTES, 'UTF-8') ?>">
+<main class="crud-page">
 <h2>Formulario de cliente</h2>
 
-<form method="post">
+<form class="crud-form" method="post">
     <input type="hidden" name="entidad" value="cliente">
 
     <label for="cliente_nombre">Nombre</label>
@@ -17,3 +19,4 @@
 
     <button type="submit">Guardar cliente</button>
 </form>
+</main>

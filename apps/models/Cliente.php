@@ -36,6 +36,42 @@ class Cliente
         }
     }
 
+        public function actualizar($id, $nombre, $documento, $correo, $telefono)
+    {
+        try {
+            $sql = 'UPDATE clientes
+                    SET nombre = :nombre, documento = :documento,
+                        correo = :correo, telefono = :telefono
+                    WHERE id = :id';
+
+            return $this->conexion->prepare($sql)->execute([
+                ':nombre'    => trim($nombre),
+                ':documento' => trim($documento),
+                ':correo'    => trim($correo),
+                ':telefono'  => trim($telefono),
+                ':id'        => (int) $id,
+            ]);
+        } catch (PDOException $e) {
+            error_log('Error al actualizar el cliente: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function eliminar($id)
+    {
+        try {
+            $consulta = $this->conexion->prepare(
+                'DELETE FROM clientes WHERE id = :id'
+            );
+            $consulta->execute([':id' => (int) $id]);
+
+            return $consulta->rowCount() > 0;
+        } catch (PDOException $e) {
+            error_log('Error al eliminar el cliente: ' . $e->getMessage());
+            return false;
+        }
+    }
+
     public function obtenerTodos()
     {
         try {

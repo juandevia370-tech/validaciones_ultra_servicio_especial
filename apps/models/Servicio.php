@@ -156,6 +156,71 @@ class Servicio
     }
 
 
+    public function actualizar($id, $clienteId, $pasajeroId, $conductorId, $vehiculoId, $destinoId, $fecha, $hora, $estado)
+    {
+        $ids = [
+            'cliente' => &$clienteId,
+            'pasajero' => &$pasajeroId,
+            'conductor' => &$conductorId,
+            'vehículo' => &$vehiculoId,
+            'destino' => &$destinoId,
+        ];
+
+        foreach ($ids as $nombre => &$valorId) {
+            $valorId = filter_var($valorId, FILTER_VALIDATE_INT);
+            if ($valorId === false || $valorId < 1) {
+                throw new InvalidArgumentException('El ID de ' . $nombre . ' no es válido.');
+            }
+        }
+        unset($valorId);
+
+        $fecha = trim($fecha);
+        $hora = trim($hora);
+        $estado = trim($estado);
+        if ($fecha === '' || $hora === '' || $estado === '') {
+            throw new InvalidArgumentException('Completa la fecha, hora y estado del servicio.');
+        }
+
+        try {
+            $sql = 'UPDATE servicios
+                    SET cliente_id = :cliente_id, pasajero_id = :pasajero_id,
+                        conductor_id = :conductor_id, vehiculo_id = :vehiculo_id,
+                        destino_id = :destino_id, fecha_servicio = :fecha_servicio,
+                        hora_servicio = :hora_servicio, estado = :estado
+                    WHERE id = :id';
+
+            return $this->conexion->prepare($sql)->execute([
+                ':cliente_id' => $clienteId,
+                ':pasajero_id' => $pasajeroId,
+                ':conductor_id' => $conductorId,
+                ':vehiculo_id' => $vehiculoId,
+                ':destino_id' => $destinoId,
+                ':fecha_servicio' => $fecha,
+                ':hora_servicio' => $hora,
+                ':estado' => $estado,
+                ':id' => (int) $id,
+            ]);
+        } catch (PDOException $e) {
+            error_log('Error al actualizar el servicio: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function eliminar($id)
+    {
+        try {
+            $consulta = $this->conexion->prepare(
+                'DELETE FROM servicios WHERE id = :id'
+            );
+            $consulta->execute([':id' => (int) $id]);
+
+            return $consulta->rowCount() > 0;
+        } catch (PDOException $e) {
+            error_log('Error al eliminar el servicio: ' . $e->getMessage());
+            return false;
+        }
+    }
+
     public function obtenerTodos()
     {
         try {
@@ -237,6 +302,11 @@ class Servicio
 
             $sql = "SELECT
                         servicios.id,
+                        servicios.cliente_id,
+                        servicios.pasajero_id,
+                        servicios.conductor_id,
+                        servicios.vehiculo_id,
+                        servicios.destino_id,
 
                         clientes.nombre AS cliente,
 
