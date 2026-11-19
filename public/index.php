@@ -68,60 +68,68 @@ $sendJson = static function ($status, array $payload) {
     exit;
 };
 
-if ($uri === '/login' && $method === 'GET') {
-    if (!empty($_SESSION['supabase_access_token'])) {
-        $result = $supabaseAuth->verify($_SESSION['supabase_access_token']);
-        if ($result['status'] === 200) {
-            header('Location: ' . app_url('/'));
+switch ($uri) {
+    case '/login':
+        if ($method === 'GET') {
+            if (!empty($_SESSION['supabase_access_token'])) {
+                $result = $supabaseAuth->verify($_SESSION['supabase_access_token']);
+                if ($result['status'] === 200) {
+                    header('Location: ' . app_url('/'));
+                    exit;
+                }
+            }
+
+            require __DIR__ . '/../apps/views/auth/login.php';
             exit;
         }
-    }
+        break;
 
-    require __DIR__ . '/../apps/views/auth/login.php';
-    exit;
-}
+    case '/auth/session':
+        if ($method === 'POST') {
+            $payload = json_decode(file_get_contents('php://input'), true);
+            $accessToken = is_array($payload) ? ($payload['access_token'] ?? '') : '';
+            $refreshToken = is_array($payload) ? ($payload['refresh_token'] ?? '') : '';
 
-if ($uri === '/auth/session' && $method === 'POST') {
-    $payload = json_decode(file_get_contents('php://input'), true);
-    $accessToken = is_array($payload) ? ($payload['access_token'] ?? '') : '';
-    $refreshToken = is_array($payload) ? ($payload['refresh_token'] ?? '') : '';
+            if (!is_string($accessToken) || $accessToken === '' || strlen($accessToken) > 8192) {
+                $sendJson(400, ['message' => 'La sesión recibida no es válida.']);
+            }
 
-    if (!is_string($accessToken) || $accessToken === '' || strlen($accessToken) > 8192) {
-        $sendJson(400, ['message' => 'La sesión recibida no es válida.']);
-    }
+            $result = $supabaseAuth->verify($accessToken);
+            if ($result['status'] !== 200 || empty($result['data']['id'])) {
+                $status = $result['status'] === 503 ? 503 : 401;
+                $message = $status === 503
+                    ? 'El servicio de autenticación no está disponible. Intenta de nuevo.'
+                    : 'No se pudo validar la sesión con Supabase.';
+                $sendJson($status, ['message' => $message]);
+            }
 
-    $result = $supabaseAuth->verify($accessToken);
-    if ($result['status'] !== 200 || empty($result['data']['id'])) {
-        $status = $result['status'] === 503 ? 503 : 401;
-        $message = $status === 503
-            ? 'El servicio de autenticación no está disponible. Intenta de nuevo.'
-            : 'No se pudo validar la sesión con Supabase.';
-        $sendJson($status, ['message' => $message]);
-    }
+            session_regenerate_id(true);
+            $_SESSION['supabase_access_token'] = $accessToken;
+            $_SESSION['supabase_refresh_token'] = is_string($refreshToken) ? $refreshToken : '';
+            $_SESSION['supabase_user'] = $result['data'];
 
-    session_regenerate_id(true);
-    $_SESSION['supabase_access_token'] = $accessToken;
-    $_SESSION['supabase_refresh_token'] = is_string($refreshToken) ? $refreshToken : '';
-    $_SESSION['supabase_user'] = $result['data'];
+            $sendJson(200, ['message' => 'Sesión verificada.']);
+        }
+        break;
 
-    $sendJson(200, ['message' => 'Sesión verificada.']);
-}
-
-if ($uri === '/auth/logout' && $method === 'POST') {
-    $_SESSION = [];
-    if (ini_get('session.use_cookies')) {
-        $cookie = session_get_cookie_params();
-        setcookie(session_name(), '', [
-            'expires' => time() - 42000,
-            'path' => $cookie['path'],
-            'domain' => $cookie['domain'],
-            'secure' => $cookie['secure'],
-            'httponly' => $cookie['httponly'],
-            'samesite' => 'Lax',
-        ]);
-    }
-    session_destroy();
-    $sendJson(200, ['message' => 'Sesión cerrada.']);
+    case '/auth/logout':
+        if ($method === 'POST') {
+            $_SESSION = [];
+            if (ini_get('session.use_cookies')) {
+                $cookie = session_get_cookie_params();
+                setcookie(session_name(), '', [
+                    'expires' => time() - 42000,
+                    'path' => $cookie['path'],
+                    'domain' => $cookie['domain'],
+                    'secure' => $cookie['secure'],
+                    'httponly' => $cookie['httponly'],
+                    'samesite' => 'Lax',
+                ]);
+            }
+            session_destroy();
+            $sendJson(200, ['message' => 'Sesión cerrada.']);
+        }
+        break;
 }
 
 $isLoginRoute = $uri === '/login' && $method === 'GET';
@@ -175,146 +183,277 @@ require_once __DIR__ . '/../apps/controllers/ServicioControoller.php';
 require_once __DIR__ . '/../apps/controllers/DestinoController.php';
 require_once __DIR__ . '/../apps/controllers/VehiculoController.php';
 
-if ($method === 'GET' && $uri === '/') {
-    $clientes = (new Cliente($conexion))->obtenerTodos();
-    $conductores = (new Conductor($conexion))->obtenerTodos();
-    $pasajeros = (new Pasajero($conexion))->obtenerTodos();
-    $servicios = (new Servicio($conexion))->obtenerTodos();
-    $destinos = (new Destino($conexion))->obtenerTodos();
-    $vehiculos = (new Vehiculo($conexion))->obtenerTodos();
+switch ($uri) {
+    case '/':
+        if ($method === 'GET') {
+            $clientes = (new Cliente($conexion))->obtenerTodos();
+            $conductores = (new Conductor($conexion))->obtenerTodos();
+            $pasajeros = (new Pasajero($conexion))->obtenerTodos();
+            $servicios = (new Servicio($conexion))->obtenerTodos();
+            $destinos = (new Destino($conexion))->obtenerTodos();
+            $vehiculos = (new Vehiculo($conexion))->obtenerTodos();
 
-    $mensajes = [
-        'creado' => 'Registro creado correctamente.',
-        'editado' => 'Registro actualizado correctamente.',
-        'eliminado' => 'Registro eliminado correctamente.',
-        'error' => 'No se pudo completar la operación. Verifica los datos y las relaciones.',
-    ];
-    $mensaje = $mensajes[$_GET['msg'] ?? ''] ?? '';
+            $mensajes = [
+                'creado' => 'Registro creado correctamente.',
+                'editado' => 'Registro actualizado correctamente.',
+                'eliminado' => 'Registro eliminado correctamente.',
+                'error' => 'No se pudo completar la operación. Verifica los datos y las relaciones.',
+            ];
+            $mensaje = $mensajes[$_GET['msg'] ?? ''] ?? '';
 
-    $rutasCrear = [
-        'clientes' => 'cliente',
-        'conductores' => 'conductor',
-        'pasajeros' => 'pasajero',
-        'servicios' => 'servicio',
-        'destinos' => 'destino',
-        'vehiculos' => 'vehiculo',
-    ];
+            $rutasCrear = [
+                'clientes' => 'cliente',
+                'conductores' => 'conductor',
+                'pasajeros' => 'pasajero',
+                'servicios' => 'servicio',
+                'destinos' => 'destino',
+                'vehiculos' => 'vehiculo',
+            ];
 
-    $tablas = [
-        [
-            'titulo' => 'Clientes',
-            'ruta' => 'cliente',
-            'clave' => 'clientes',
-            'registros' => $clientes,
-            'columnas' => ['ID' => 'id', 'Nombre' => 'nombre', 'Documento' => 'documento', 'Correo' => 'correo', 'Teléfono' => 'telefono'],
-        ],
-        [
-            'titulo' => 'Conductores',
-            'ruta' => 'conductor',
-            'clave' => 'conductores',
-            'registros' => $conductores,
-            'columnas' => ['ID' => 'id', 'Nombre' => 'nombre', 'Documento' => 'documento', 'Licencia' => 'licencia', 'Teléfono' => 'telefono'],
-        ],
-        [
-            'titulo' => 'Pasajeros',
-            'ruta' => 'pasajero',
-            'clave' => 'pasajeros',
-            'registros' => $pasajeros,
-            'columnas' => ['ID' => 'id', 'Nombre' => 'nombre', 'Documento' => 'documento', 'Teléfono' => 'telefono', 'Cliente' => 'cliente'],
-        ],
-        [
-            'titulo' => 'Servicios',
-            'ruta' => 'servicio',
-            'clave' => 'servicios',
-            'registros' => $servicios,
-            'columnas' => ['ID' => 'id', 'Cliente' => 'cliente', 'Pasajero' => 'pasajero', 'Conductor' => 'conductor', 'Vehículo' => 'vehiculo', 'Destino' => 'destino', 'Fecha' => 'fecha_servicio', 'Hora' => 'hora_servicio', 'Estado' => 'estado'],
-        ],
-        [
-            'titulo' => 'Destinos',
-            'ruta' => 'destino',
-            'clave' => 'destinos',
-            'registros' => $destinos,
-            'columnas' => ['ID' => 'id', 'Origen' => 'ciudad_origen', 'Destino' => 'ciudad_destino', 'Dirección' => 'direccion_destino', 'Tarifa' => 'tarifa'],
-        ],
-        [
-            'titulo' => 'Vehículos',
-            'ruta' => 'vehiculo',
-            'clave' => 'vehiculos',
-            'registros' => $vehiculos,
-            'columnas' => ['ID' => 'id', 'Placa' => 'placa', 'Marca' => 'marca', 'Modelo' => 'modelo', 'Capacidad' => 'capacidad', 'Conductor' => 'conductor'],
-        ],
-    ];
+            $tablas = [
+                [
+                    'titulo' => 'Clientes',
+                    'ruta' => 'cliente',
+                    'clave' => 'clientes',
+                    'registros' => $clientes,
+                    'columnas' => ['ID' => 'id', 'Nombre' => 'nombre', 'Documento' => 'documento', 'Correo' => 'correo', 'Teléfono' => 'telefono'],
+                ],
+                [
+                    'titulo' => 'Conductores',
+                    'ruta' => 'conductor',
+                    'clave' => 'conductores',
+                    'registros' => $conductores,
+                    'columnas' => ['ID' => 'id', 'Nombre' => 'nombre', 'Documento' => 'documento', 'Licencia' => 'licencia', 'Teléfono' => 'telefono'],
+                ],
+                [
+                    'titulo' => 'Pasajeros',
+                    'ruta' => 'pasajero',
+                    'clave' => 'pasajeros',
+                    'registros' => $pasajeros,
+                    'columnas' => ['ID' => 'id', 'Nombre' => 'nombre', 'Documento' => 'documento', 'Teléfono' => 'telefono', 'Cliente' => 'cliente'],
+                ],
+                [
+                    'titulo' => 'Servicios',
+                    'ruta' => 'servicio',
+                    'clave' => 'servicios',
+                    'registros' => $servicios,
+                    'columnas' => ['ID' => 'id', 'Cliente' => 'cliente', 'Pasajero' => 'pasajero', 'Conductor' => 'conductor', 'Vehículo' => 'vehiculo', 'Destino' => 'destino', 'Fecha' => 'fecha_servicio', 'Hora' => 'hora_servicio', 'Estado' => 'estado'],
+                ],
+                [
+                    'titulo' => 'Destinos',
+                    'ruta' => 'destino',
+                    'clave' => 'destinos',
+                    'registros' => $destinos,
+                    'columnas' => ['ID' => 'id', 'Origen' => 'ciudad_origen', 'Destino' => 'ciudad_destino', 'Dirección' => 'direccion_destino', 'Tarifa' => 'tarifa'],
+                ],
+                [
+                    'titulo' => 'Vehículos',
+                    'ruta' => 'vehiculo',
+                    'clave' => 'vehiculos',
+                    'registros' => $vehiculos,
+                    'columnas' => ['ID' => 'id', 'Placa' => 'placa', 'Marca' => 'marca', 'Modelo' => 'modelo', 'Capacidad' => 'capacidad', 'Conductor' => 'conductor'],
+                ],
+            ];
 
-    $selectedTable = $_GET['tabla'] ?? 'todos';
-    $validTables = array_merge(['todos'], array_keys($rutasCrear));
-    if (!in_array($selectedTable, $validTables, true)) {
-        $selectedTable = 'todos';
-    }
-    $visibleTables = $selectedTable === 'todos'
-        ? $tablas
-        : array_values(array_filter($tablas, static function ($table) use ($selectedTable) {
-            return $table['clave'] === $selectedTable;
-        }));
+            $selectedTable = $_GET['tabla'] ?? 'todos';
+            $validTables = array_merge(['todos'], array_keys($rutasCrear));
+            if (!in_array($selectedTable, $validTables, true)) {
+                $selectedTable = 'todos';
+            }
+            $visibleTables = $selectedTable === 'todos'
+                ? $tablas
+                : array_values(array_filter($tablas, static function ($table) use ($selectedTable) {
+                    return $table['clave'] === $selectedTable;
+                }));
 
-    require __DIR__ . '/../apps/views/index.php';
-    exit;
-}
+            require __DIR__ . '/../apps/views/index.php';
+            exit;
+        }
+        http_response_code(404);
+        exit('Página no encontrada.');
 
-$rutasEdicion = [
-    '/cliente/editar' => [ClienteController::class, 'editar', 'GET'],
-    '/cliente/actualizar' => [ClienteController::class, 'actualizar', 'POST'],
-    '/cliente/eliminar' => [ClienteController::class, 'eliminar', 'POST'],
-    '/conductor/editar' => [ConductorController::class, 'editar', 'GET'],
-    '/conductor/actualizar' => [ConductorController::class, 'actualizar', 'POST'],
-    '/conductor/eliminar' => [ConductorController::class, 'eliminar', 'POST'],
-    '/pasajero/editar' => [PasajeroController::class, 'editar', 'GET'],
-    '/pasajero/actualizar' => [PasajeroController::class, 'actualizar', 'POST'],
-    '/pasajero/eliminar' => [PasajeroController::class, 'eliminar', 'POST'],
-    '/servicio/editar' => [ServicioController::class, 'editar', 'GET'],
-    '/servicio/actualizar' => [ServicioController::class, 'actualizar', 'POST'],
-    '/servicio/eliminar' => [ServicioController::class, 'eliminar', 'POST'],
-    '/destino/editar' => [DestinoController::class, 'editar', 'GET'],
-    '/destino/actualizar' => [DestinoController::class, 'actualizar', 'POST'],
-    '/destino/eliminar' => [DestinoController::class, 'eliminar', 'POST'],
-    '/vehiculo/editar' => [VehiculoController::class, 'editar', 'GET'],
-    '/vehiculo/actualizar' => [VehiculoController::class, 'actualizar', 'POST'],
-    '/vehiculo/eliminar' => [VehiculoController::class, 'eliminar', 'POST'],
-];
+    case '/cliente/editar':
+        if ($method !== 'GET') {
+            http_response_code(405);
+            exit('Método no permitido.');
+        }
+        (new ClienteController($conexion))->editar();
+        exit;
 
-if (isset($rutasEdicion[$uri])) {
-    [$controladorClase, $accion, $metodoEsperado] = $rutasEdicion[$uri];
-    if ($method !== $metodoEsperado) {
-        http_response_code(405);
-        exit('Método no permitido.');
-    }
+    case '/cliente/actualizar':
+        if ($method !== 'POST') {
+            http_response_code(405);
+            exit('Método no permitido.');
+        }
+        (new ClienteController($conexion))->actualizar();
+        exit;
 
-    (new $controladorClase($conexion))->$accion();
-    exit;
-}
+    case '/cliente/eliminar':
+        if ($method !== 'POST') {
+            http_response_code(405);
+            exit('Método no permitido.');
+        }
+        (new ClienteController($conexion))->eliminar();
+        exit;
 
-$rutasCrear = [
-    '/cliente/crear' => ClienteController::class,
-    '/conductor/crear' => ConductorController::class,
-    '/pasajero/crear' => PasajeroController::class,
-    '/servicio/crear' => ServicioController::class,
-    '/destino/crear' => DestinoController::class,
-    '/vehiculo/crear' => VehiculoController::class,
-];
+    case '/conductor/editar':
+        if ($method !== 'GET') {
+            http_response_code(405);
+            exit('Método no permitido.');
+        }
+        (new ConductorController($conexion))->editar();
+        exit;
 
-if (!isset($rutasCrear[$uri])) {
-    http_response_code(404);
-    exit('Página no encontrada.');
+    case '/conductor/actualizar':
+        if ($method !== 'POST') {
+            http_response_code(405);
+            exit('Método no permitido.');
+        }
+        (new ConductorController($conexion))->actualizar();
+        exit;
+
+    case '/conductor/eliminar':
+        if ($method !== 'POST') {
+            http_response_code(405);
+            exit('Método no permitido.');
+        }
+        (new ConductorController($conexion))->eliminar();
+        exit;
+
+    case '/pasajero/editar':
+        if ($method !== 'GET') {
+            http_response_code(405);
+            exit('Método no permitido.');
+        }
+        (new PasajeroController($conexion))->editar();
+        exit;
+
+    case '/pasajero/actualizar':
+        if ($method !== 'POST') {
+            http_response_code(405);
+            exit('Método no permitido.');
+        }
+        (new PasajeroController($conexion))->actualizar();
+        exit;
+
+    case '/pasajero/eliminar':
+        if ($method !== 'POST') {
+            http_response_code(405);
+            exit('Método no permitido.');
+        }
+        (new PasajeroController($conexion))->eliminar();
+        exit;
+
+    case '/servicio/editar':
+        if ($method !== 'GET') {
+            http_response_code(405);
+            exit('Método no permitido.');
+        }
+        (new ServicioController($conexion))->editar();
+        exit;
+
+    case '/servicio/actualizar':
+        if ($method !== 'POST') {
+            http_response_code(405);
+            exit('Método no permitido.');
+        }
+        (new ServicioController($conexion))->actualizar();
+        exit;
+
+    case '/servicio/eliminar':
+        if ($method !== 'POST') {
+            http_response_code(405);
+            exit('Método no permitido.');
+        }
+        (new ServicioController($conexion))->eliminar();
+        exit;
+
+    case '/destino/editar':
+        if ($method !== 'GET') {
+            http_response_code(405);
+            exit('Método no permitido.');
+        }
+        (new DestinoController($conexion))->editar();
+        exit;
+
+    case '/destino/actualizar':
+        if ($method !== 'POST') {
+            http_response_code(405);
+            exit('Método no permitido.');
+        }
+        (new DestinoController($conexion))->actualizar();
+        exit;
+
+    case '/destino/eliminar':
+        if ($method !== 'POST') {
+            http_response_code(405);
+            exit('Método no permitido.');
+        }
+        (new DestinoController($conexion))->eliminar();
+        exit;
+
+    case '/vehiculo/editar':
+        if ($method !== 'GET') {
+            http_response_code(405);
+            exit('Método no permitido.');
+        }
+        (new VehiculoController($conexion))->editar();
+        exit;
+
+    case '/vehiculo/actualizar':
+        if ($method !== 'POST') {
+            http_response_code(405);
+            exit('Método no permitido.');
+        }
+        (new VehiculoController($conexion))->actualizar();
+        exit;
+
+    case '/vehiculo/eliminar':
+        if ($method !== 'POST') {
+            http_response_code(405);
+            exit('Método no permitido.');
+        }
+        (new VehiculoController($conexion))->eliminar();
+        exit;
+
+    case '/cliente/crear':
+        $controladorClase = ClienteController::class;
+        break;
+
+    case '/conductor/crear':
+        $controladorClase = ConductorController::class;
+        break;
+
+    case '/pasajero/crear':
+        $controladorClase = PasajeroController::class;
+        break;
+
+    case '/servicio/crear':
+        $controladorClase = ServicioController::class;
+        break;
+
+    case '/destino/crear':
+        $controladorClase = DestinoController::class;
+        break;
+
+    case '/vehiculo/crear':
+        $controladorClase = VehiculoController::class;
+        break;
+
+    default:
+        http_response_code(404);
+        exit('Página no encontrada.');
 }
 
 if ($method !== 'GET' && $method !== 'POST') {
-    http_response_code(405);
-    exit('Método no permitido.');
+        http_response_code(405);
+        exit('Método no permitido.');
 }
 
-$controlador = new $rutasCrear[$uri]($conexion);
+$controlador = new $controladorClase($conexion);
 if ($method === 'GET') {
-    $controlador->crear();
-    exit;
+        $controlador->crear();
+        exit;
 }
 
 $ok = $controlador->guardar();
