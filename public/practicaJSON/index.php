@@ -1,35 +1,45 @@
 <?php
-$productos = [
-    [
-        "id" => 1,
-        "nombre" => "Mouse inalámbrico",
-        "precio" => 35000,
-        "stock" => 12,
-        "disponible" => true
-    ],
-    [
-        "id" => 2,
-        "nombre" => "Teclado mecánico",
-        "precio" => 165000,
-        "stock" => 8,
-        "disponible" => true
-    ],
-    [
-        "id" => 3,
-        "nombre" => "Monitor de 24 pulgadas",
-        "precio" => 780000,
-        "stock" => 6,
-        "disponible" => true
-    ]
-];
+$contenido = file_get_contents(__DIR__ . "/productos.json");
 
-$productos[] = [
-    "id" => 4,
-    "nombre" => "Cable USB-C",
-    "precio" => 25000,
-    "stock" => 30,
-    "disponible" => true
-];
+if ($contenido === false) {
+    http_response_code(500);
+    exit("No se pudo leer el archivo productos.json.");
+}
 
-echo json_encode($productos, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+$productos = json_decode($contenido, true);
+
+if (!is_array($productos)) {
+    http_response_code(500);
+    exit("No se pudo convertir productos.json en un arreglo PHP.");
+}
 ?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Productos</title>
+</head>
+<body>
+    <h1>Productos y precios</h1>
+    <ul>
+        <?php foreach ($productos as $producto): ?>
+            <li>
+                <?= htmlspecialchars($producto["nombre"], ENT_QUOTES, "UTF-8") ?>:
+                $<?= number_format($producto["precio"], 0, ",", ".") ?>
+            </li>
+        <?php endforeach; ?>
+    </ul>
+
+    <h2>Productos con precio superior a $100.000</h2>
+    <ul>
+        <?php foreach ($productos as $producto): ?>
+            <?php if ($producto["precio"] > 100000): ?>
+                <li>
+                    <?= htmlspecialchars($producto["nombre"], ENT_QUOTES, "UTF-8") ?>:
+                    $<?= number_format($producto["precio"], 0, ",", ".") ?>
+                </li>
+            <?php endif; ?>
+        <?php endforeach; ?>
+    </ul>
+</body>
+</html>
