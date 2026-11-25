@@ -26,9 +26,12 @@ if (!function_exists('app_env')) {
             }
         }
 
-        $environmentValue = getenv($key);
-        if ($environmentValue !== false && $environmentValue !== '') {
-            return $environmentValue;
+        // Algunos entornos (por ejemplo, funciones serverless) exponen las
+        // variables solo en $_ENV o $_SERVER y no mediante getenv().
+        foreach ([getenv($key), $_ENV[$key] ?? false, $_SERVER[$key] ?? false] as $environmentValue) {
+            if (is_string($environmentValue) && $environmentValue !== '') {
+                return $environmentValue;
+            }
         }
 
         if (isset($fileConfig[$key]) && $fileConfig[$key] !== '') {
