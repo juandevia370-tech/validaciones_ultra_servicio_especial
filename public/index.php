@@ -48,10 +48,27 @@ if ($appBasePath !== '' && strpos($requestUri, $appBasePath) === 0) {
 $uri = '/' . ltrim((string) $requestUri, '/');
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
+// Comprobación de estado para la plataforma de hosting: no requiere sesión
+// y no devuelve datos, solo si la aplicación y la base de datos responden.
+if ($uri === '/health' && ($method === 'GET' || $method === 'HEAD')) {
+    require_once __DIR__ . '/../config/database.php';
+    $conexion->query('SELECT 1');
+    http_response_code(200);
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-store');
+    echo json_encode(['status' => 'ok', 'database' => 'ok']);
+    exit;
+}
+
+// En la nube el HTTPS termina en el proxy de la plataforma, que informa el
+// protocolo original con X-Forwarded-Proto.
+$isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+    || strtolower($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https';
+
 session_set_cookie_params([
     'lifetime' => 0,
     'path' => $appBasePath !== '' ? $appBasePath : '/',
-    'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+    'secure' => $isHttps,
     'httponly' => true,
     'samesite' => 'Lax',
 ]);
@@ -97,7 +114,7 @@ switch ($uri) {
             $result = $supabaseAuth->verify($accessToken);
             if ($result['status'] !== 200 || empty($result['data']['id'])) {
                 $status = $result['status'] === 503 ? 503 : 401;
-                $message = $status === 503
+                $message = $status  === 503
                     ? 'El servicio de autenticación no está disponible. Intenta de nuevo.'
                     : 'No se pudo validar la sesión con Supabase.';
                 $sendJson($status, ['message' => $message]);

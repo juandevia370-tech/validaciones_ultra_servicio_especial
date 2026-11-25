@@ -86,8 +86,7 @@ class Cliente
 
         } catch (PDOException $e) {
 
-            echo "Error al obtener clientes: "
-                . $e->getMessage();
+            error_log("Error al obtener clientes: " . $e->getMessage());
 
             return [];
         }
@@ -130,7 +129,7 @@ class Cliente
 
         } catch (Exception $e) {
 
-            echo "Error: " . $e->getMessage();
+            error_log("Error: " . $e->getMessage());
 
             return null;
         }

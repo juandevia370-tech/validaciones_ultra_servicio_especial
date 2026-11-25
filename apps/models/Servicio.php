@@ -281,8 +281,7 @@ class Servicio
 
         } catch (PDOException $e) {
 
-            echo "Error al obtener los servicios: "
-                . $e->getMessage();
+            error_log("Error al obtener los servicios: " . $e->getMessage());
 
             return [];
         }
@@ -378,7 +377,7 @@ class Servicio
 
         } catch (Exception $e) {
 
-            echo "Error: " . $e->getMessage();
+            error_log("Error: " . $e->getMessage());
 
             return null;
         }

@@ -62,8 +62,7 @@ class Pasajero
 
         } catch (PDOException $e) {
 
-            echo "Error al obtener pasajeros: "
-                . $e->getMessage();
+            error_log("Error al obtener pasajeros: " . $e->getMessage());
 
             return [];
         }
@@ -151,7 +150,7 @@ class Pasajero
 
         } catch (Exception $e) {
 
-            echo "Error: " . $e->getMessage();
+            error_log("Error: " . $e->getMessage());
 
             return null;
         }

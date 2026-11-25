@@ -58,7 +58,7 @@
             </p>
         </section>
     </main>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
     <script src="<?= htmlspecialchars(app_url('/js/auth/config.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="<?= htmlspecialchars(app_url('/js/auth/supabase.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="<?= htmlspecialchars(app_url('/js/auth/login.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
