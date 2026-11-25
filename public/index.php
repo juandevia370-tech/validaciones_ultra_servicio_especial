@@ -72,6 +72,20 @@ session_set_cookie_params([
     'httponly' => true,
     'samesite' => 'Lax',
 ]);
+
+// En serverless (Vercel) las sesiones se guardan en PostgreSQL; en XAMPP o
+// Docker siguen usando archivos, como siempre.
+require_once __DIR__ . '/../config/env.php';
+if (app_env('SESSION_DRIVER', 'files') === 'database') {
+    require_once __DIR__ . '/../config/database.php';
+    require_once __DIR__ . '/../apps/middleware/SesionBaseDatos.php';
+    if ($conexion->getAttribute(PDO::ATTR_DRIVER_NAME) !== 'pgsql') {
+        error_log('SESSION_DRIVER=database requiere DB_DRIVER=pgsql.');
+        http_response_code(500);
+        exit('La configuración del servidor no es válida.');
+    }
+    session_set_save_handler(new SesionBaseDatos($conexion, (int) ini_get('session.gc_maxlifetime')), true);
+}
 session_start();
 
 require_once __DIR__ . '/../apps/middleware/SupabaseAuth.php';

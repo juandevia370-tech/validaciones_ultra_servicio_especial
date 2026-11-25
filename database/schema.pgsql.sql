@@ -96,7 +96,17 @@ CREATE INDEX idx_servicios_conductor_id ON transporte.servicios (conductor_id);
 CREATE INDEX idx_servicios_vehiculo_id  ON transporte.servicios (vehiculo_id);
 CREATE INDEX idx_servicios_destino_id   ON transporte.servicios (destino_id);
 
+-- Sesiones PHP (necesarias en Vercel/serverless, SESSION_DRIVER=database).
+CREATE TABLE transporte.sesiones (
+    id     varchar(128) NOT NULL,
+    datos  text         NOT NULL,
+    expira timestamptz  NOT NULL,
+    CONSTRAINT sesiones_pkey PRIMARY KEY (id)
+);
+CREATE INDEX idx_sesiones_expira ON transporte.sesiones (expira);
+
 -- Seguridad: nada de acceso desde la API pública (clave publishable / anon).
+ALTER TABLE transporte.sesiones    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE transporte.clientes    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE transporte.conductores ENABLE ROW LEVEL SECURITY;
 ALTER TABLE transporte.destinos    ENABLE ROW LEVEL SECURITY;

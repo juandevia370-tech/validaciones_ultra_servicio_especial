@@ -56,19 +56,21 @@ Después de iniciar sesión se puede seleccionar y administrar cualquiera de las
 - Crea usuarios de prueba desde el panel de Supabase Auth. No se necesita publicar ni copiar una clave `service_role`; nunca debe agregarse al navegador ni al repositorio.
 - El login requiere conexión con Supabase y la extensión cURL habilitada en PHP.
 
-## Despliegue en producción (Render + Supabase)
+## Despliegue en producción (Vercel + Supabase)
 
-Arquitectura: **Render** (plan Free, contenedor Docker con PHP 8.2 + Apache) ejecuta la aplicación; **Supabase** aporta la base de datos PostgreSQL (esquema privado `transporte`) y la autenticación. En local se sigue usando XAMPP/MariaDB sin cambios (`DB_DRIVER=mysql`).
-
-Archivos de infraestructura:
+Arquitectura: **Vercel** (plan Hobby gratuito) ejecuta el PHP como funciones serverless con el runtime comunitario [`vercel-php`](https://github.com/vercel-community/php) (PHP 8.3) y sirve CSS/JS como archivos estáticos. **Supabase** aporta la base de datos PostgreSQL (esquema privado `transporte`), la autenticación y el almacenamiento de las sesiones PHP (tabla `transporte.sesiones`), porque en serverless no hay disco persistente. En local se sigue usando XAMPP/MariaDB sin cambios (`DB_DRIVER=mysql`).
 
 | Archivo | Función |
 |---|---|
-| `Dockerfile` | Imagen PHP 8.2 + Apache con `pdo_pgsql`, `pdo_mysql` y cURL |
-| `docker/` | Configuración de Apache (raíz `public/`, cabeceras de seguridad), PHP de producción y arranque |
-| `render.yaml` | Blueprint de Render (servicio, variables de entorno, `/health`) |
+| `vercel.json` | Runtime PHP, reescrituras de rutas, archivos estáticos y cabeceras de seguridad |
+| `api/index.php` | Punto de entrada en Vercel; delega en `public/index.php` |
+| `api/practica.php` | Sirve la práctica `public/practicaJSON` |
+| `api/php.ini` | PHP de producción (sin mostrar errores, sesiones seguras) |
+| `package.json` | Fija Node.js 22.x, requerido por `vercel-php` |
+| `apps/middleware/SesionBaseDatos.php` | Sesiones PHP en PostgreSQL (`SESSION_DRIVER=database`) |
 | `database/schema.pgsql.sql` | Esquema PostgreSQL equivalente al de MySQL (PK, UNIQUE, FK, RLS) |
 | `database/exportar_a_supabase.php` | Genera el SQL de migración con los datos de MySQL local |
+| `Dockerfile`, `docker/`, `render.yaml` | Alternativa: despliegue en Render/Docker con Apache |
 
 ### 1. Migrar la base de datos a Supabase
 
@@ -78,33 +80,46 @@ php database/exportar_a_supabase.php
 
 Genera `database/backups/migracion_supabase_<fecha>.sql` (excluido de Git porque contiene datos personales). Abre Supabase > **SQL Editor**, pega el contenido y ejecútalo. Todo corre en una transacción; al final muestra el conteo de registros por tabla.
 
-### 2. Crear el servicio en Render
+### 2. Crear el proyecto en Vercel
 
-1. En Render: **New > Blueprint**, conecta este repositorio de GitHub y selecciona la rama.
-2. Render lee `render.yaml` y pide los valores secretos. Tómalos de Supabase > **Connect > Session pooler**:
-   - `DB_HOST`: `aws-0-<region>.pooler.supabase.com`
-   - `DB_USER`: `postgres.<id_del_proyecto>`
-   - `DB_PASSWORD`: la contraseña de la base de datos (Project Settings > Database)
-3. Al terminar el despliegue, `https://<servicio>.onrender.com/health` debe responder `{"status":"ok","database":"ok"}`.
+1. En Vercel: **Add New > Project**, importa este repositorio de GitHub. *Framework Preset*: **Other** (el resto lo toma de `vercel.json`).
+2. En **Environment Variables** agrega:
+
+| Variable | Valor |
+|---|---|
+| `APP_ENV` | `production` |
+| `DB_DRIVER` | `pgsql` |
+| `DB_HOST` | Supabase > Connect > **Session pooler** (`aws-…pooler.supabase.com`) |
+| `DB_PORT` | `5432` |
+| `DB_NAME` | `postgres` |
+| `DB_USER` | `postgres.<id_del_proyecto>` |
+| `DB_PASSWORD` | contraseña de la base de datos (secreta) |
+| `DB_SCHEMA` | `transporte` |
+| `DB_SSLMODE` | `require` |
+| `SESSION_DRIVER` | `database` |
+
+3. **Deploy**. Luego `https://<proyecto>.vercel.app/health` debe responder `{"status":"ok","database":"ok"}`.
+4. Recomendado: en Settings > Functions, elige la región de Vercel más cercana a la región de Supabase.
 
 ### 3. Ajustar Supabase Auth
 
-Supabase > Authentication > **URL Configuration**: define la URL de Render como *Site URL* y agrégala a *Redirect URLs*.
+Supabase > Authentication > **URL Configuration**: define la URL de Vercel como *Site URL* y agrégala a *Redirect URLs*.
 
 ### Actualizar el sistema
 
-Cada `git push` a la rama configurada vuelve a desplegar automáticamente. Los cambios de esquema se aplican con el SQL Editor de Supabase.
+Cada `git push` a la rama de producción del proyecto despliega automáticamente; las demás ramas generan *previews*. Los cambios de esquema se aplican con el SQL Editor de Supabase.
 
 ### Variables de entorno
 
-| Variable | Producción | Descripción |
-|---|---|---|
-| `APP_ENV` | `production` | Entorno (`local` o `production`) |
-| `DB_DRIVER` | `pgsql` | `mysql` (XAMPP) o `pgsql` (Supabase) |
-| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | secreto | Conexión a la base de datos |
-| `DB_SCHEMA` | `transporte` | Esquema de PostgreSQL |
-| `DB_SSLMODE` | `require` | TLS hacia la base de datos |
-| `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` | opcional | Sobrescriben `config/supabase.php` |
+| Variable | Descripción |
+|---|---|
+| `APP_ENV` | `local` o `production` |
+| `DB_DRIVER` | `mysql` (XAMPP) o `pgsql` (Supabase) |
+| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | Conexión a la base de datos |
+| `DB_SCHEMA` | Esquema de PostgreSQL (`transporte`) |
+| `DB_SSLMODE` | TLS hacia la base de datos (`require` en producción) |
+| `SESSION_DRIVER` | `files` (XAMPP/Docker) o `database` (Vercel) |
+| `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` | Opcionales; sobrescriben `config/supabase.php` |
 
 Nunca uses la clave `service_role` de Supabase en esta aplicación ni la subas al repositorio.
 
