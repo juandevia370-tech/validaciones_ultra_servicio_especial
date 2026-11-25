@@ -1,0 +1,13 @@
+.git
+.gitignore
+.env
+.env.*
+database/
+docs/
+routes/
+public/index2.php
+README.md
+Dockerfile
+.dockerignore
+render.yaml
+*.md

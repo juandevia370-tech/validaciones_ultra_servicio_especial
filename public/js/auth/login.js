@@ -10,6 +10,38 @@
         message.hidden = !text;
     };
 
+    // Si el navegador ya tiene una sesión válida de Supabase (por ejemplo, tras
+    // un reinicio del servidor que borró la sesión PHP), se restaura sin pedir
+    // de nuevo la contraseña.
+    const restoreSession = async () => {
+        try {
+            const { data } = await window.supabaseClient.auth.getSession();
+            const session = data && data.session;
+            if (!session) {
+                return;
+            }
+
+            const response = await fetch(`${basePath}/auth/session`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    access_token: session.access_token,
+                    refresh_token: session.refresh_token
+                })
+            });
+
+            if (response.ok) {
+                window.location.assign(`${basePath}/`);
+            } else if (response.status === 401) {
+                await window.supabaseClient.auth.signOut();
+            }
+        } catch (error) {
+            // Sin sesión restaurable: se muestra el formulario normalmente.
+        }
+    };
+    restoreSession();
+
     form.addEventListener('submit', async (event) => {
         event.preventDefault();
         showMessage('');

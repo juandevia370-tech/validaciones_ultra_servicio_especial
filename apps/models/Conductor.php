@@ -31,7 +31,7 @@ class Conductor
 
             return $this->obtenerTodos();
         }catch (PDOException $e) {
-            echo "Error al guardar el conductor: " . $e->getMessage();
+            error_log("Error al guardar el conductor: " . $e->getMessage());
             return false;
         }
     }
@@ -50,8 +50,7 @@ class Conductor
 
         } catch (PDOException $e) {
 
-            echo "Error al obtener conductores: "
-                . $e->getMessage();
+            error_log("Error al obtener conductores: " . $e->getMessage());
 
             return [];
         }
@@ -94,7 +93,7 @@ class Conductor
 
         } catch (Exception $e) {
 
-            echo "Error: " . $e->getMessage();
+            error_log("Error: " . $e->getMessage());
 
             return null;
         }

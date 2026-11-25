@@ -1,3 +1,15 @@
+# Secretos y configuración local
 .env
+.env.*
+!.env.example
+
+# Respaldos y exportaciones de datos (contienen datos personales)
+/database/backups/
+
+# Dependencias
 /vendor/
 /node_modules/
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
