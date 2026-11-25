@@ -1,0 +1,29 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "mkdir -p dist && cp -r public/css public/js dist/",
+  "outputDirectory": "dist",
+  "functions": {
+    "api/*.php": {
+      "runtime": "vercel-php@0.7.4",
+      "maxDuration": 20
+    }
+  },
+  "rewrites": [
+    { "source": "/practicaJSON", "destination": "/api/practica.php" },
+    { "source": "/practicaJSON/", "destination": "/api/practica.php" },
+    { "source": "/practicaJSON/index.php", "destination": "/api/practica.php" },
+    { "source": "/(.*)", "destination": "/api/index.php" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" }
+      ]
+    }
+  ]
+}

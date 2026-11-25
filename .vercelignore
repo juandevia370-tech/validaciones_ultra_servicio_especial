@@ -1,0 +1,10 @@
+.env
+.env.*
+!.env.example
+database/backups/
+docs/
+routes/
+public/index2.php
+docker/
+Dockerfile
+render.yaml

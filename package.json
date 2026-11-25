@@ -1,0 +1,8 @@
+{
+  "name": "ultra-servicio-especial",
+  "private": true,
+  "description": "Sistema de información de transporte (PHP) - configuración de despliegue en Vercel",
+  "engines": {
+    "node": "22.x"
+  }
+}
