@@ -3,6 +3,7 @@
 <h2>Formulario de conductor</h2>
 
 <form class="crud-form" method="post">
+    <?= csrf_field() ?>
     <input type="hidden" name="entidad" value="conductor">
 
     <label for="conductor_nombre">Nombre</label>

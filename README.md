@@ -49,12 +49,13 @@ Inicia sesión con un usuario creado en Supabase Auth.
 
 Después de iniciar sesión se puede seleccionar y administrar cualquiera de las tablas existentes en la base `sistema_transporte`: clientes, conductores, pasajeros, servicios, destinos y vehículos. Cada módulo permite consultar, crear, editar y eliminar registros.
 
-## Configuración de Supabase Auth
+## Autenticación (Supabase Auth desde el servidor)
 
-- La URL del proyecto y la clave pública se configuran en `config/supabase.php` y `public/js/auth/config.js`.
-- PHP verifica el token de acceso con Supabase antes de permitir el acceso a las rutas protegidas. La sesión de la aplicación usa una cookie `HttpOnly`.
-- Crea usuarios de prueba desde el panel de Supabase Auth. No se necesita publicar ni copiar una clave `service_role`; nunca debe agregarse al navegador ni al repositorio.
-- El login requiere conexión con Supabase y la extensión cURL habilitada en PHP.
+- El inicio de sesión se procesa **en el backend PHP**: el formulario envía correo y contraseña a `POST /login`, PHP los valida con Supabase (`/auth/v1/token`) y guarda los tokens **solo en la sesión del servidor**. El navegador nunca recibe tokens ni carga librerías de Supabase.
+- Cada petición privada verifica el token con Supabase y lo renueva con el *refresh token* cuando expira. `POST /auth/logout` revoca los tokens en Supabase y destruye la sesión.
+- Protecciones: token CSRF en todos los formularios, límite de 5 intentos fallidos cada 15 minutos por sesión, regeneración del ID de sesión al iniciar, cookie `HttpOnly`/`SameSite=Lax` (`Secure` con HTTPS), mensajes de error genéricos y política CSP sin scripts externos.
+- La URL del proyecto y la clave pública (`publishable`) se configuran en `config/supabase.php` o con las variables `SUPABASE_URL` y `SUPABASE_PUBLISHABLE_KEY`. Nunca uses la clave `service_role`.
+- Los usuarios se crean en Supabase > Authentication > Users (marcando *Auto Confirm User*).
 
 ## Despliegue en producción (Vercel + Supabase)
 

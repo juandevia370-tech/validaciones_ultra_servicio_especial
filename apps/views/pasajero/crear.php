@@ -3,6 +3,7 @@
 <h2>Formulario de pasajero</h2>
 
 <form class="crud-form" method="post">
+    <?= csrf_field() ?>
     <input type="hidden" name="entidad" value="pasajero">
 
     <label for="pasajero_nombre">Nombre</label>

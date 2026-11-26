@@ -3,6 +3,7 @@
 <h2>Formulario de destino</h2>
 
 <form class="crud-form" method="post">
+    <?= csrf_field() ?>
     <label for="destino_ciudad_origen">Ciudad de origen</label>
     <input type="text" id="destino_ciudad_origen" name="ciudad_origen" maxlength="100" required>
 

@@ -3,6 +3,7 @@
 <h2>Formulario de cliente</h2>
 
 <form class="crud-form" method="post">
+    <?= csrf_field() ?>
     <input type="hidden" name="entidad" value="cliente">
 
     <label for="cliente_nombre">Nombre</label>

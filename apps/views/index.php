@@ -11,16 +11,17 @@ $emailUsuario = $authUser['email'] ?? 'Usuario autenticado';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#f3f6f8">
-    <title>Panel de transporte | Ultra Servicio Especial</title>
+    <meta name="theme-color" content="#3c0054">
+    <title>Panel de transporte | ULTRA Servicio Especial</title>
+    <link rel="icon" type="image/png" href="<?= $escape(app_url('/img/favicon.png')) ?>">
     <link rel="stylesheet" href="<?= $escape(app_url('/css/app.css')) ?>">
 </head>
-<body data-base-path="<?= $escape(APP_BASE_PATH) ?>">
+<body>
     <div class="app-shell">
         <aside class="app-sidebar">
             <a class="app-brand" href="<?= $escape(app_url('/')) ?>">
-                <span class="app-brand-mark" aria-hidden="true">U</span>
-                <span>ULTRA<br>SERVICIO ESPECIAL</span>
+                <img class="app-brand-logo" src="<?= $escape(app_url('/img/logo-ultra-blanco.png')) ?>" alt="ULTRA Servicio Especial" width="120" height="113">
+                <span class="app-brand-text">Sistema de transporte</span>
             </a>
 
             <p class="sidebar-label">Administración</p>
@@ -50,7 +51,10 @@ $emailUsuario = $authUser['email'] ?? 'Usuario autenticado';
                     <p>Administración / <?= $selectedTable === 'todos' ? 'Vista general' : $escape($visibleTables[0]['titulo']) ?></p>
                     <h1>Panel de transporte</h1>
                 </div>
-                <button class="button button-quiet" id="logout-button" type="button">Cerrar sesión</button>
+                <form class="logout-form" method="post" action="<?= $escape(app_url('/auth/logout')) ?>">
+                    <?= csrf_field() ?>
+                    <button class="button button-quiet" id="logout-button" type="submit">Cerrar sesión</button>
+                </form>
             </header>
 
             <div class="dashboard-content">
@@ -64,7 +68,7 @@ $emailUsuario = $authUser['email'] ?? 'Usuario autenticado';
                 </section>
 
                 <?php if ($mensaje !== ''): ?>
-                    <p class="auth-message" role="status"><?= $escape($mensaje) ?></p>
+                    <p class="auth-message" role="status" data-type="<?= ($_GET['msg'] ?? '') === 'error' ? 'error' : 'success' ?>"><?= $escape($mensaje) ?></p>
                 <?php endif; ?>
 
                 <section aria-labelledby="select-table-title">
@@ -88,7 +92,7 @@ $emailUsuario = $authUser['email'] ?? 'Usuario autenticado';
                 </section>
 
                 <?php foreach ($visibleTables as $tabla): ?>
-                    <section class="data-card" aria-labelledby="table-<?= $escape($tabla['clave']) ?>" style="margin-top: 20px;">
+                    <section class="data-card" aria-labelledby="table-<?= $escape($tabla['clave']) ?>">
                         <header class="data-card-header">
                             <div>
                                 <h2 id="table-<?= $escape($tabla['clave']) ?>"><?= $escape($tabla['titulo']) ?></h2>
@@ -119,7 +123,8 @@ $emailUsuario = $authUser['email'] ?? 'Usuario autenticado';
                                                 <td>
                                                     <div class="row-actions">
                                                         <a class="button" href="<?= $escape(app_url('/' . $tabla['ruta'] . '/editar?id=' . (int) $registro['id'])) ?>">Editar</a>
-                                                        <form class="delete-form" method="post" action="<?= $escape(app_url('/' . $tabla['ruta'] . '/eliminar')) ?>" onsubmit="return confirm('¿Confirmas que quieres eliminar este registro?');">
+                                                        <form class="delete-form" method="post" action="<?= $escape(app_url('/' . $tabla['ruta'] . '/eliminar')) ?>" data-confirm="¿Confirmas que quieres eliminar este registro?">
+                                                            <?= csrf_field() ?>
                                                             <input type="hidden" name="id" value="<?= (int) $registro['id'] ?>">
                                                             <button class="delete-button" type="submit">Eliminar</button>
                                                         </form>
@@ -136,9 +141,6 @@ $emailUsuario = $authUser['email'] ?? 'Usuario autenticado';
             </div>
         </main>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-    <script src="<?= $escape(app_url('/js/auth/config.js')) ?>"></script>
-    <script src="<?= $escape(app_url('/js/auth/supabase.js')) ?>"></script>
-    <script src="<?= $escape(app_url('/js/auth/dashboard.js')) ?>"></script>
+    <script src="<?= $escape(app_url('/js/app.js')) ?>" defer></script>
 </body>
 </html>

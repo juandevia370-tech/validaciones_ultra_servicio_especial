@@ -89,15 +89,42 @@ if (app_env('SESSION_DRIVER', 'files') === 'database') {
 session_start();
 
 require_once __DIR__ . '/../apps/middleware/SupabaseAuth.php';
+require_once __DIR__ . '/../apps/middleware/Csrf.php';
 $supabaseAuth = new SupabaseAuth(require __DIR__ . '/../config/supabase.php');
 
-$sendJson = static function ($status, array $payload) {
-    http_response_code($status);
-    header('Content-Type: application/json; charset=utf-8');
-    header('Cache-Control: no-store');
-    echo json_encode($payload);
+$destroySession = static function () {
+    $_SESSION = [];
+    if (ini_get('session.use_cookies')) {
+        $cookie = session_get_cookie_params();
+        setcookie(session_name(), '', [
+            'expires' => time() - 42000,
+            'path' => $cookie['path'],
+            'domain' => $cookie['domain'],
+            'secure' => $cookie['secure'],
+            'httponly' => $cookie['httponly'],
+            'samesite' => 'Lax',
+        ]);
+    }
+    session_destroy();
+};
+
+$redirectToLogin = static function ($message = '', $email = '') {
+    if ($message !== '') {
+        $_SESSION['login_error'] = $message;
+        $_SESSION['login_email'] = $email;
+    }
+    header('Location: ' . app_url('/login'), true, 303);
     exit;
 };
+
+// Todo formulario POST debe incluir el token CSRF de la sesión.
+if ($method === 'POST' && !csrf_valid()) {
+    if ($uri === '/login') {
+        $redirectToLogin('Tu sesión de inicio expiró. Vuelve a intentarlo.');
+    }
+    http_response_code(419);
+    exit('El formulario expiró o no es válido. Vuelve atrás, recarga la página e inténtalo de nuevo.');
+}
 
 switch ($uri) {
     case '/login':
@@ -110,101 +137,131 @@ switch ($uri) {
                 }
             }
 
+            $loginError = is_string($_SESSION['login_error'] ?? null) ? $_SESSION['login_error'] : '';
+            $loginEmail = is_string($_SESSION['login_email'] ?? null) ? $_SESSION['login_email'] : '';
+            unset($_SESSION['login_error'], $_SESSION['login_email']);
+
+            header('Cache-Control: no-store');
             require __DIR__ . '/../apps/views/auth/login.php';
             exit;
         }
-        break;
 
-    case '/auth/session':
         if ($method === 'POST') {
-            $payload = json_decode(file_get_contents('php://input'), true);
-            $accessToken = is_array($payload) ? ($payload['access_token'] ?? '') : '';
-            $refreshToken = is_array($payload) ? ($payload['refresh_token'] ?? '') : '';
+            $email = strtolower(trim((string) ($_POST['correo'] ?? '')));
+            $password = (string) ($_POST['contrasena'] ?? '');
 
-            if (!is_string($accessToken) || $accessToken === '' || strlen($accessToken) > 8192) {
-                $sendJson(400, ['message' => 'La sesión recibida no es válida.']);
+            // Límite de intentos: 5 fallidos cada 15 minutos por sesión
+            // (Supabase aplica además sus propios límites).
+            $now = time();
+            $attempts = array_values(array_filter(
+                (array) ($_SESSION['login_attempts'] ?? []),
+                static function ($time) use ($now) {
+                    return is_int($time) && $time > $now - 900;
+                }
+            ));
+            if (count($attempts) >= 5) {
+                $redirectToLogin('Demasiados intentos fallidos. Espera 15 minutos e inténtalo de nuevo.', $email);
             }
 
-            $result = $supabaseAuth->verify($accessToken);
-            if ($result['status'] !== 200 || empty($result['data']['id'])) {
-                $status = $result['status'] === 503 ? 503 : 401;
-                $message = $status  === 503
-                    ? 'El servicio de autenticación no está disponible. Intenta de nuevo.'
-                    : 'No se pudo validar la sesión con Supabase.';
-                $sendJson($status, ['message' => $message]);
+            if (
+                strlen($email) > 254
+                || filter_var($email, FILTER_VALIDATE_EMAIL) === false
+                || strlen($password) < 6
+                || strlen($password) > 72
+            ) {
+                $_SESSION['login_attempts'] = array_merge($attempts, [$now]);
+                $redirectToLogin('Correo o contraseña incorrectos.', $email);
             }
 
-            session_regenerate_id(true);
-            $_SESSION['supabase_access_token'] = $accessToken;
-            $_SESSION['supabase_refresh_token'] = is_string($refreshToken) ? $refreshToken : '';
-            $_SESSION['supabase_user'] = $result['data'];
+            $result = $supabaseAuth->signInWithPassword($email, $password);
+            unset($password);
 
-            $sendJson(200, ['message' => 'Sesión verificada.']);
+            if (
+                $result['status'] === 200
+                && !empty($result['data']['access_token'])
+                && !empty($result['data']['user']['id'])
+            ) {
+                session_regenerate_id(true);
+                unset($_SESSION['login_attempts'], $_SESSION['login_error'], $_SESSION['login_email']);
+                $_SESSION['supabase_access_token'] = $result['data']['access_token'];
+                $_SESSION['supabase_refresh_token'] = (string) ($result['data']['refresh_token'] ?? '');
+                $_SESSION['supabase_user'] = $result['data']['user'];
+                csrf_regenerate();
+                header('Location: ' . app_url('/'), true, 303);
+                exit;
+            }
+
+            $_SESSION['login_attempts'] = array_merge($attempts, [$now]);
+            $errorCode = is_array($result['data'])
+                ? (string) ($result['data']['error_code'] ?? $result['data']['code'] ?? '')
+                : '';
+            error_log('Inicio de sesión rechazado (HTTP ' . $result['status'] . ($errorCode !== '' ? ', ' . $errorCode : '') . ').');
+
+            if ($result['status'] === 503) {
+                $redirectToLogin('El servicio de autenticación no está disponible. Intenta de nuevo en unos minutos.', $email);
+            }
+            if ($result['status'] === 429) {
+                $redirectToLogin('Demasiados intentos. Espera unos minutos e inténtalo de nuevo.', $email);
+            }
+            if ($errorCode === 'email_not_confirmed') {
+                $redirectToLogin('Tu correo aún no está confirmado. Contacta al administrador.', $email);
+            }
+            $redirectToLogin('Correo o contraseña incorrectos.', $email);
         }
-        break;
+
+        http_response_code(405);
+        exit('Método no permitido.');
 
     case '/auth/logout':
-        if ($method === 'POST') {
-            $_SESSION = [];
-            if (ini_get('session.use_cookies')) {
-                $cookie = session_get_cookie_params();
-                setcookie(session_name(), '', [
-                    'expires' => time() - 42000,
-                    'path' => $cookie['path'],
-                    'domain' => $cookie['domain'],
-                    'secure' => $cookie['secure'],
-                    'httponly' => $cookie['httponly'],
-                    'samesite' => 'Lax',
-                ]);
-            }
-            session_destroy();
-            $sendJson(200, ['message' => 'Sesión cerrada.']);
+        if ($method !== 'POST') {
+            http_response_code(405);
+            exit('Método no permitido.');
         }
-        break;
-}
 
-$isLoginRoute = $uri === '/login' && $method === 'GET';
-$isSessionRoute = $uri === '/auth/session' || $uri === '/auth/logout';
-if (!$isLoginRoute && !$isSessionRoute) {
-    $accessToken = $_SESSION['supabase_access_token'] ?? '';
-    $authResult = $accessToken !== ''
-        ? $supabaseAuth->verify($accessToken)
-        : ['status' => 401, 'data' => null];
-
-    if ($authResult['status'] === 503) {
-        http_response_code(503);
-        exit('No se pudo conectar con Supabase para verificar la sesión. Intenta de nuevo.');
-    }
-
-    if ($authResult['status'] === 401 && !empty($_SESSION['supabase_refresh_token'])) {
-        $refreshResult = $supabaseAuth->refresh($_SESSION['supabase_refresh_token']);
-        if ($refreshResult['status'] === 200 && !empty($refreshResult['data']['access_token'])) {
-            $authResult = $supabaseAuth->verify($refreshResult['data']['access_token']);
-            if ($authResult['status'] === 200) {
-                $_SESSION['supabase_access_token'] = $refreshResult['data']['access_token'];
-                $_SESSION['supabase_refresh_token'] = $refreshResult['data']['refresh_token'] ?? $_SESSION['supabase_refresh_token'];
-            }
-        } elseif ($refreshResult['status'] === 503) {
-            http_response_code(503);
-            exit('No se pudo conectar con Supabase para verificar la sesión. Intenta de nuevo.');
+        if (!empty($_SESSION['supabase_access_token'])) {
+            // Revoca los refresh tokens en Supabase; si falla, igual se cierra la sesión local.
+            $supabaseAuth->signOut($_SESSION['supabase_access_token']);
         }
-    }
-
-    if ($authResult['status'] === 503) {
-        http_response_code(503);
-        exit('No se pudo conectar con Supabase para verificar la sesión. Intenta de nuevo.');
-    }
-
-    if ($authResult['status'] !== 200 || empty($authResult['data']['id'])) {
-        $_SESSION = [];
-        session_destroy();
-        header('Location: ' . app_url('/login'));
+        $destroySession();
+        header('Location: ' . app_url('/login'), true, 303);
         exit;
-    }
-
-    $_SESSION['supabase_user'] = $authResult['data'];
-    $authUser = $authResult['data'];
 }
+
+// A partir de aquí todas las rutas son privadas.
+$accessToken = $_SESSION['supabase_access_token'] ?? '';
+$authResult = $accessToken !== ''
+    ? $supabaseAuth->verify($accessToken)
+    : ['status' => 401, 'data' => null];
+
+if ($authResult['status'] === 401 && !empty($_SESSION['supabase_refresh_token'])) {
+    $refreshResult = $supabaseAuth->refresh($_SESSION['supabase_refresh_token']);
+    if ($refreshResult['status'] === 200 && !empty($refreshResult['data']['access_token'])) {
+        $authResult = $supabaseAuth->verify($refreshResult['data']['access_token']);
+        if ($authResult['status'] === 200) {
+            $_SESSION['supabase_access_token'] = $refreshResult['data']['access_token'];
+            $_SESSION['supabase_refresh_token'] = $refreshResult['data']['refresh_token'] ?? $_SESSION['supabase_refresh_token'];
+        }
+    } elseif ($refreshResult['status'] === 503) {
+        $authResult = $refreshResult;
+    }
+}
+
+if ($authResult['status'] === 503) {
+    http_response_code(503);
+    exit('No se pudo conectar con el servicio de autenticación. Intenta de nuevo.');
+}
+
+if ($authResult['status'] !== 200 || empty($authResult['data']['id'])) {
+    $destroySession();
+    header('Location: ' . app_url('/login'));
+    exit;
+}
+
+$_SESSION['supabase_user'] = $authResult['data'];
+$authUser = $authResult['data'];
+
+// Las páginas privadas no se guardan en caché (evita verlas con "Atrás" tras cerrar sesión).
+header('Cache-Control: no-store, private');
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../apps/controllers/ClienteController.php';

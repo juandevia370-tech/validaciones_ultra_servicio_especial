@@ -8,6 +8,7 @@ $e = static function ($valor): string {
 <h2>Editar servicio #<?= (int) $servicio['id'] ?></h2>
 
 <form class="crud-form" method="post" action="<?= htmlspecialchars(app_url('/servicio/actualizar'), ENT_QUOTES, 'UTF-8') ?>">
+    <?= csrf_field() ?>
     <input type="hidden" name="id" value="<?= (int) $servicio['id'] ?>">
 
     <label for="servicio_cliente_id">Cliente</label>

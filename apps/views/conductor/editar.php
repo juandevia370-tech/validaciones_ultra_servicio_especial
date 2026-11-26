@@ -8,6 +8,7 @@ $e = static function ($valor): string {
 <h2>Editar conductor #<?= (int) $conductor['id'] ?></h2>
 
 <form class="crud-form" method="post" action="<?= htmlspecialchars(app_url('/conductor/actualizar'), ENT_QUOTES, 'UTF-8') ?>">
+    <?= csrf_field() ?>
     <input type="hidden" name="id" value="<?= (int) $conductor['id'] ?>">
 
     <label for="conductor_nombre">Nombre</label>

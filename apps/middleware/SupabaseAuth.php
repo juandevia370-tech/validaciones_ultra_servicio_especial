@@ -30,6 +30,28 @@ class SupabaseAuth
         ];
     }
 
+    /**
+     * Inicia sesión con correo y contraseña desde el servidor. Los tokens
+     * resultantes nunca llegan al navegador: se guardan en la sesión PHP.
+     */
+    public function signInWithPassword($email, $password)
+    {
+        return $this->request(
+            '/auth/v1/token?grant_type=password',
+            'POST',
+            null,
+            ['email' => $email, 'password' => $password]
+        );
+    }
+
+    /**
+     * Cierra la sesión en Supabase y revoca los refresh tokens del usuario.
+     */
+    public function signOut($accessToken)
+    {
+        return $this->request('/auth/v1/logout', 'POST', $accessToken);
+    }
+
     public function refresh($refreshToken)
     {
         return $this->request(

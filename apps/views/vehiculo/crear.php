@@ -3,6 +3,7 @@
 <h2>Formulario de vehículo</h2>
 
 <form class="crud-form" method="post">
+    <?= csrf_field() ?>
     <label for="vehiculo_placa">Placa</label>
     <input type="text" id="vehiculo_placa" name="placa" maxlength="10" required>
 
