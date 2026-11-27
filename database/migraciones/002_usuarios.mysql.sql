@@ -1,5 +1,5 @@
 -- Migración 002 (MySQL / MariaDB de XAMPP)
--- Tabla de usuarios para la autenticación propia del sistema (sin Supabase Auth).
+-- Tabla de usuarios para la autenticación propia del sistema.
 -- Las contraseñas se guardan solo como hash bcrypt (password_hash de PHP).
 -- Para crear usuarios: php database/crear_usuario.php
 

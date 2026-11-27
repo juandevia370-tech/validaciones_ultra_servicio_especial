@@ -1,6 +1,6 @@
 # Validaciones Ultra Servicio Especial
 
-Aplicación web en PHP para administrar clientes, conductores, pasajeros, servicios, destinos y vehículos. Usa MySQL/MariaDB en local y PostgreSQL en producción, con autenticación de usuarios propia en el backend PHP.
+Aplicación web en PHP para administrar clientes, conductores, pasajeros, servicios, destinos y vehículos. Usa MySQL/MariaDB (administrable con phpMyAdmin) y autenticación de usuarios propia en el backend PHP.
 
 ## Estructura del proyecto
 
@@ -28,7 +28,7 @@ Lee las credenciales de variables de entorno o del archivo `.env`, que no se deb
 
 - PHP 7.4 o superior.
 - Apache con `mod_rewrite` y soporte para `.htaccess`.
-- Extensiones PHP `pdo_mysql` (local) o `pdo_pgsql` (producción) y `curl`.
+- Extensión PHP `pdo_mysql` (y `mbstring`).
 - MySQL o MariaDB compatible.
 
 ## Ejecucion con XAMPP
@@ -43,7 +43,7 @@ Lee las credenciales de variables de entorno o del archivo `.env`, que no se deb
 http://localhost/login
 ```
 
-Crea tu primer usuario con `php database/crear_usuario.php` (después de ejecutar `database/migraciones/002_usuarios.mysql.sql`) e inicia sesión con él.
+Ejecuta en phpMyAdmin las migraciones de `database/migraciones/` (001, 002 y 003), crea tu primer usuario con `php database/crear_usuario.php` e inicia sesión con él.
 
 ## Módulos del sistema
 
@@ -57,73 +57,58 @@ Después de iniciar sesión se puede seleccionar y administrar cualquiera de las
 - **Gestión de usuarios** desde el panel (tabla *Usuarios*): crear, editar, activar/desactivar, cambiar contraseña y eliminar. No puedes desactivarte ni eliminarte a ti mismo, y siempre debe quedar al menos un usuario activo.
 - **Crear usuarios por consola**:
   - Local (XAMPP): `php database/crear_usuario.php`
-  - Producción: `php database/crear_usuario.php --sql` genera una instrucción SQL con la contraseña ya cifrada para ejecutarla en el SQL Editor de la base de producción.
+  - Producción: `php database/crear_usuario.php --sql` genera una instrucción SQL con la contraseña ya cifrada para ejecutarla en la pestaña SQL de phpMyAdmin.
 
-## Despliegue en producción (Vercel + Supabase)
+## Despliegue en producción (Vercel + MySQL)
 
-Arquitectura: **Vercel** (plan Hobby gratuito) ejecuta el PHP como funciones serverless con el runtime comunitario [`vercel-php`](https://github.com/vercel-community/php) (PHP 8.3) y sirve CSS/JS como archivos estáticos. **Supabase** aporta solo la base de datos PostgreSQL (esquema privado `transporte`), incluido el almacenamiento de las sesiones PHP (tabla `transporte.sesiones`), porque en serverless no hay disco persistente. En local se sigue usando XAMPP/MariaDB sin cambios (`DB_DRIVER=mysql`).
+Arquitectura: **Vercel** (plan Hobby gratuito) ejecuta el PHP como funciones serverless con el runtime comunitario [`vercel-php`](https://github.com/vercel-community/php) (PHP 8.3) y sirve CSS, JS e imágenes como archivos estáticos. La base de datos es **MySQL/MariaDB** administrable con **phpMyAdmin** (por ejemplo, el plan gratuito de AlwaysData), accesible desde Internet. Como en serverless no hay disco persistente, las sesiones PHP se guardan en la tabla `sesiones` (`SESSION_DRIVER=database`). En local se usa XAMPP sin cambios.
 
 | Archivo | Función |
 |---|---|
-| `vercel.json` | Runtime PHP, reescrituras de rutas, archivos estáticos y cabeceras de seguridad |
-| `api/index.php` | Punto de entrada en Vercel; delega en `public/index.php` |
-| `api/practica.php` | Sirve la práctica `public/practicaJSON` |
-| `api/php.ini` | PHP de producción (sin mostrar errores, sesiones seguras) |
+| `vercel.json` | Runtime PHP, región, rutas, archivos estáticos y cabeceras de seguridad |
+| `api/index.php`, `api/practica.php` | Puntos de entrada en Vercel (delegan en `public/`) |
+| `api/php.ini` | PHP de producción en Vercel |
 | `package.json` | Fija Node.js 22.x, requerido por `vercel-php` |
-| `apps/middleware/SesionBaseDatos.php` | Sesiones PHP en PostgreSQL (`SESSION_DRIVER=database`) |
-| `database/schema.pgsql.sql` | Esquema PostgreSQL equivalente al de MySQL (PK, UNIQUE, FK, RLS) |
-| `database/exportar_a_supabase.php` | Genera el SQL de migración con los datos de MySQL local |
-| `Dockerfile`, `docker/`, `render.yaml` | Alternativa: despliegue en Render/Docker con Apache |
+| `apps/middleware/SesionBaseDatos.php` | Sesiones PHP en MySQL |
+| `database/migraciones/*.mysql.sql` | Cambios de esquema (001 servicios/vehículos, 002 usuarios, 003 sesiones) |
+| `database/crear_usuario.php` | Crea usuarios por consola |
+| `public/.htaccess`, `.htaccess` | Reglas de Apache (XAMPP): enrutador, cabeceras y bloqueo de archivos internos |
 
-### 1. Migrar la base de datos a Supabase
+### 1. Base de datos MySQL
 
-```bash
-php database/exportar_a_supabase.php
-```
+1. Crea una base MySQL/MariaDB con acceso remoto y su usuario (en AlwaysData: *Bases de datos > MySQL*).
+2. En su **phpMyAdmin**, selecciona la base y usa **Importar** con el volcado de tu base local (`mysqldump` o *Exportar* desde el phpMyAdmin de XAMPP). Debe incluir todas las tablas, también `usuarios` y `sesiones`.
+3. Crea el primer usuario: `php database/crear_usuario.php --sql` genera una instrucción con la contraseña ya cifrada; pégala en la pestaña **SQL** de phpMyAdmin.
 
-Genera `database/backups/migracion_supabase_<fecha>.sql` (excluido de Git porque contiene datos personales). Abre Supabase > **SQL Editor**, pega el contenido y ejecútalo. Todo corre en una transacción; al final muestra el conteo de registros por tabla.
-
-### 2. Crear el proyecto en Vercel
-
-1. En Vercel: **Add New > Project**, importa este repositorio de GitHub. *Framework Preset*: **Other** (el resto lo toma de `vercel.json`).
-2. En **Environment Variables** agrega:
+### 2. Variables de entorno en Vercel
 
 | Variable | Valor |
 |---|---|
 | `APP_ENV` | `production` |
-| `DB_DRIVER` | `pgsql` |
-| `DB_HOST` | Supabase > Connect > **Session pooler** (`aws-…pooler.supabase.com`) |
-| `DB_PORT` | `5432` |
-| `DB_NAME` | `postgres` |
-| `DB_USER` | `postgres.<id_del_proyecto>` |
-| `DB_PASSWORD` | contraseña de la base de datos (secreta) |
-| `DB_SCHEMA` | `transporte` |
-| `DB_SSLMODE` | `require` |
+| `DB_HOST` | servidor MySQL (AlwaysData: `mysql-<cuenta>.alwaysdata.net`) |
+| `DB_PORT` | `3306` |
+| `DB_NAME` | nombre de la base |
+| `DB_USER` | usuario de la base |
+| `DB_PASSWORD` | contraseña de la base (márcala como *Secret*) |
+| `DB_SSL` | `true` (conexión cifrada) |
 | `SESSION_DRIVER` | `database` |
 
-3. **Deploy**. Luego `https://<proyecto>.vercel.app/health` debe responder `{"status":"ok","database":"ok"}`.
-4. Recomendado: en Settings > Functions, elige la región de Vercel más cercana a la región de Supabase.
-
-### 3. Migraciones y primer usuario
-
-Ejecuta en el SQL Editor, en orden, `database/migraciones/001_tipo_vehiculo_llegada_estados.pgsql.sql` y `database/migraciones/002_usuarios.pgsql.sql`. La 002 crea la tabla `usuarios` y, si la base tenía usuarios de Supabase Auth, los copia conservando sus contraseñas. Para crear más usuarios usa el panel o `php database/crear_usuario.php --sql`.
+Después de cambiar variables: **Deployments > ⋯ > Redeploy**. Comprueba `https://<proyecto>.vercel.app/health` → `{"status":"ok","database":"ok"}`.
 
 ### Actualizar el sistema
 
-Cada `git push` a la rama de producción del proyecto despliega automáticamente; las demás ramas generan *previews*. Los cambios de esquema se aplican con el SQL Editor de Supabase.
+Cada `git push` a `main` despliega automáticamente en Vercel. Los cambios de esquema se ejecutan en phpMyAdmin (local y producción) con los archivos de `database/migraciones/`.
 
 ### Variables de entorno
 
 | Variable | Descripción |
 |---|---|
 | `APP_ENV` | `local` o `production` |
-| `DB_DRIVER` | `mysql` (XAMPP) o `pgsql` (Supabase) |
-| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | Conexión a la base de datos |
-| `DB_SCHEMA` | Esquema de PostgreSQL (`transporte`) |
-| `DB_SSLMODE` | TLS hacia la base de datos (`require` en producción) |
-| `SESSION_DRIVER` | `files` (XAMPP/Docker) o `database` (Vercel) |
+| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | Conexión MySQL |
+| `DB_SSL`, `DB_SSL_CA` | Conexión cifrada hacia un MySQL remoto |
+| `SESSION_DRIVER` | `files` (XAMPP) o `database` (Vercel) |
 
-Nunca subas `.env`, contraseñas ni la contraseña de la base de datos al repositorio.
+Nunca subas `.env` ni contraseñas al repositorio.
 
 ## Comprobacion por consola
 

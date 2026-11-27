@@ -60,8 +60,8 @@ if ($uri === '/health' && ($method === 'GET' || $method === 'HEAD')) {
     exit;
 }
 
-// En la nube el HTTPS termina en el proxy de la plataforma, que informa el
-// protocolo original con X-Forwarded-Proto.
+// Si el hosting termina el HTTPS en un proxy, informa el protocolo original
+// con X-Forwarded-Proto.
 $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
     || strtolower($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https';
 
@@ -73,17 +73,12 @@ session_set_cookie_params([
     'samesite' => 'Lax',
 ]);
 
-// En serverless (Vercel) las sesiones se guardan en PostgreSQL; en XAMPP o
-// Docker siguen usando archivos, como siempre.
+// En Vercel (serverless) las sesiones se guardan en la base de datos; en XAMPP
+// siguen usando archivos, como siempre.
 require_once __DIR__ . '/../config/env.php';
 if (app_env('SESSION_DRIVER', 'files') === 'database') {
     require_once __DIR__ . '/../config/database.php';
     require_once __DIR__ . '/../apps/middleware/SesionBaseDatos.php';
-    if ($conexion->getAttribute(PDO::ATTR_DRIVER_NAME) !== 'pgsql') {
-        error_log('SESSION_DRIVER=database requiere DB_DRIVER=pgsql.');
-        http_response_code(500);
-        exit('La configuración del servidor no es válida.');
-    }
     session_set_save_handler(new SesionBaseDatos($conexion, (int) ini_get('session.gc_maxlifetime')), true);
 }
 session_start();

@@ -7,9 +7,10 @@
  *       Crea el usuario en la base configurada en .env (por ejemplo, XAMPP).
  *
  *   php database/crear_usuario.php --sql
- *       No toca ninguna base: imprime una instrucción SQL (PostgreSQL) con la
- *       contraseña ya cifrada, para ejecutarla en el SQL Editor de producción.
- *       Si el correo ya existe, actualiza su nombre y contraseña.
+ *       No toca ninguna base: imprime una instrucción SQL (MySQL) con la
+ *       contraseña ya cifrada, para ejecutarla en la pestaña SQL de phpMyAdmin
+ *       de la base de producción. Si el correo ya existe, actualiza su nombre
+ *       y su contraseña.
  *
  * La contraseña se escribe oculta (en Windows mediante PowerShell) y nunca se
  * guarda en texto plano: solo su hash bcrypt.
@@ -72,14 +73,14 @@ try {
 
 if ($soloSql) {
     $literal = static function ($valor) {
-        return "'" . str_replace("'", "''", $valor) . "'";
+        return "'" . str_replace(['\\', "'"], ['\\\\', "''"], $valor) . "'";
     };
     $hash = password_hash($contrasena, PASSWORD_DEFAULT);
-    fwrite(STDOUT, PHP_EOL . "-- Copia y ejecuta esto en el SQL Editor de producción:" . PHP_EOL);
-    fwrite(STDOUT, 'INSERT INTO transporte.usuarios (nombre, correo, contrasena_hash, activo) VALUES ('
-        . $literal($nombre) . ', ' . $literal($correo) . ', ' . $literal($hash) . ', true)'
-        . ' ON CONFLICT (correo) DO UPDATE SET nombre = EXCLUDED.nombre, contrasena_hash = EXCLUDED.contrasena_hash,'
-        . ' activo = true, intentos_fallidos = 0, bloqueado_hasta = NULL;' . PHP_EOL);
+    fwrite(STDOUT, PHP_EOL . "-- Copia y ejecuta esto en phpMyAdmin (pestaña SQL) de la base de producción:" . PHP_EOL);
+    fwrite(STDOUT, 'INSERT INTO usuarios (nombre, correo, contrasena_hash, activo, creado_en) VALUES ('
+        . $literal($nombre) . ', ' . $literal($correo) . ', ' . $literal($hash) . ', 1, UTC_TIMESTAMP())'
+        . ' ON DUPLICATE KEY UPDATE nombre = VALUES(nombre), contrasena_hash = VALUES(contrasena_hash),'
+        . ' activo = 1, intentos_fallidos = 0, bloqueado_hasta = NULL;' . PHP_EOL);
     exit(0);
 }
 
