@@ -30,14 +30,6 @@
         <?php endforeach; ?>
     </select>
 
-    <label for="vehiculo_id">Vehículo</label>
-    <select id="vehiculo_id" name="vehiculo_id" required>
-        <option value="">Selecciona un vehículo</option>
-        <?php foreach ($vehiculos as $vehiculo): ?>
-            <option value="<?= (int) $vehiculo['id'] ?>"><?= htmlspecialchars($vehiculo['placa'] . ' - ' . $vehiculo['marca'] . ' ' . $vehiculo['modelo'], ENT_QUOTES, 'UTF-8') ?></option>
-        <?php endforeach; ?>
-    </select>
-
     <label for="destino_id">Destino</label>
     <select id="destino_id" name="destino_id" required>
         <option value="">Selecciona un destino</option>
@@ -46,15 +38,9 @@
         <?php endforeach; ?>
     </select>
 
-    <label for="fecha_servicio">Fecha del servicio</label>
-    <input type="date" id="fecha_servicio" name="fecha_servicio" placeholder="Fecha del servicio" required>
-
-    <label for="hora_servicio">Hora del servicio</label>
-    <input type="time" id="hora_servicio" name="hora_servicio" placeholder="Hora del servicio" required>
-
-    <label for="estado">Estado</label>
-    <input type="text" id="estado" name="estado" placeholder="Estado del servicio" required>
+    <?php require __DIR__ . '/_campos.php'; ?>
 
     <button type="submit">Guardar servicio</button>
 </form>
 </main>
+<script src="<?= htmlspecialchars(app_url('/js/app.js'), ENT_QUOTES, 'UTF-8') ?>" defer></script>

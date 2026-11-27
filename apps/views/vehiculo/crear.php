@@ -7,6 +7,14 @@
     <label for="vehiculo_placa">Placa</label>
     <input type="text" id="vehiculo_placa" name="placa" maxlength="10" required>
 
+    <label for="vehiculo_tipo">Tipo de vehículo</label>
+    <select id="vehiculo_tipo" name="tipo" required>
+        <option value="">Selecciona el tipo</option>
+        <?php foreach (Vehiculo::TIPOS as $tipo): ?>
+            <option value="<?= htmlspecialchars($tipo, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($tipo, ENT_QUOTES, 'UTF-8') ?></option>
+        <?php endforeach; ?>
+    </select>
+
     <label for="vehiculo_marca">Marca</label>
     <input type="text" id="vehiculo_marca" name="marca" maxlength="50" required>
 

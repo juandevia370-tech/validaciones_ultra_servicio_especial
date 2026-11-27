@@ -8,7 +8,7 @@ $escape = static function ($value): string {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#3c0054">
+    <meta name="theme-color" content="#1d0729">
     <title>Iniciar sesión | ULTRA Servicio Especial</title>
     <link rel="icon" type="image/png" href="<?= $escape(app_url('/img/favicon.png')) ?>">
     <link rel="stylesheet" href="<?= $escape(app_url('/css/app.css')) ?>">
@@ -17,9 +17,9 @@ $escape = static function ($value): string {
     <main class="auth-page">
         <div class="auth-shell">
             <aside class="auth-aside">
-                <img class="auth-aside-logo" src="<?= $escape(app_url('/img/logo-ultra-blanco.png')) ?>" alt="ULTRA Servicio Especial" width="200" height="188">
+                <img class="auth-aside-logo" src="<?= $escape(app_url('/img/logo-ultra-3d.webp')) ?>" alt="ULTRA Servicio Especial - Más allá de lo que esperas" width="560" height="488">
                 <div>
-                    <p class="auth-aside-tagline">Más allá de lo que esperas</p>
+                    <p class="auth-aside-tagline">Sistema de información de transporte</p>
                     <ul class="auth-aside-list">
                         <li>Clientes y pasajeros</li>
                         <li>Conductores y vehículos</li>
@@ -29,7 +29,7 @@ $escape = static function ($value): string {
             </aside>
 
             <section class="auth-card" aria-labelledby="login-title">
-                <img class="auth-logo" src="<?= $escape(app_url('/img/logo-ultra.png')) ?>" alt="ULTRA Servicio Especial" width="170" height="157">
+                <img class="auth-logo" src="<?= $escape(app_url('/img/logo-ultra-3d-sm.webp')) ?>" alt="ULTRA Servicio Especial" width="300" height="262">
 
                 <header class="auth-heading">
                     <p class="auth-eyebrow">Sistema de transporte</p>

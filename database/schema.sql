@@ -44,12 +44,14 @@ CREATE TABLE IF NOT EXISTS pasajeros (
 CREATE TABLE IF NOT EXISTS vehiculos (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     placa VARCHAR(20) NOT NULL,
+    tipo VARCHAR(30) NOT NULL,
     marca VARCHAR(80) NOT NULL,
     modelo VARCHAR(80) NOT NULL,
     capacidad INT UNSIGNED NOT NULL,
     conductor_id INT UNSIGNED NOT NULL,
     PRIMARY KEY (id),
     KEY idx_vehiculos_conductor_id (conductor_id),
+    CONSTRAINT chk_vehiculos_tipo CHECK (tipo IN ('Automóvil', 'Camioneta', 'Van', 'Buseta', 'Microbús', 'Bus')),
     CONSTRAINT fk_vehiculos_conductor
         FOREIGN KEY (conductor_id) REFERENCES conductores (id)
         ON UPDATE CASCADE ON DELETE RESTRICT
@@ -64,6 +66,8 @@ CREATE TABLE IF NOT EXISTS servicios (
     destino_id INT UNSIGNED NOT NULL,
     fecha_servicio DATE NOT NULL,
     hora_servicio TIME NOT NULL,
+    fecha_llegada DATE NULL,
+    hora_llegada TIME NULL,
     estado VARCHAR(50) NOT NULL,
     PRIMARY KEY (id),
     KEY idx_servicios_cliente_id (cliente_id),
@@ -71,6 +75,8 @@ CREATE TABLE IF NOT EXISTS servicios (
     KEY idx_servicios_conductor_id (conductor_id),
     KEY idx_servicios_vehiculo_id (vehiculo_id),
     KEY idx_servicios_destino_id (destino_id),
+    CONSTRAINT chk_servicios_estado CHECK (estado IN ('Pendiente', 'En proceso', 'Finalizado')),
+    CONSTRAINT chk_servicios_llegada CHECK (fecha_llegada IS NULL OR fecha_llegada >= fecha_servicio),
     CONSTRAINT fk_servicios_cliente
         FOREIGN KEY (cliente_id) REFERENCES clientes (id)
         ON UPDATE CASCADE ON DELETE RESTRICT,

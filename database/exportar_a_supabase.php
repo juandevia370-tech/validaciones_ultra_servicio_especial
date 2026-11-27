@@ -30,8 +30,8 @@ $tablas = [
     'conductores' => ['id', 'nombre', 'documento', 'licencia', 'telefono'],
     'destinos' => ['id', 'ciudad_origen', 'ciudad_destino', 'direccion_destino', 'tarifa'],
     'pasajeros' => ['id', 'nombre', 'documento', 'telefono', 'cliente_id'],
-    'vehiculos' => ['id', 'placa', 'marca', 'modelo', 'capacidad', 'conductor_id'],
-    'servicios' => ['id', 'cliente_id', 'pasajero_id', 'conductor_id', 'vehiculo_id', 'destino_id', 'fecha_servicio', 'hora_servicio', 'estado'],
+    'vehiculos' => ['id', 'placa', 'tipo', 'marca', 'modelo', 'capacidad', 'conductor_id'],
+    'servicios' => ['id', 'cliente_id', 'pasajero_id', 'conductor_id', 'vehiculo_id', 'destino_id', 'fecha_servicio', 'hora_servicio', 'fecha_llegada', 'hora_llegada', 'estado'],
 ];
 
 $literal = static function ($valor) {

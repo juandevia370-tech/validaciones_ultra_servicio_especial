@@ -286,8 +286,15 @@ switch ($uri) {
                 'editado' => 'Registro actualizado correctamente.',
                 'eliminado' => 'Registro eliminado correctamente.',
                 'error' => 'No se pudo completar la operación. Verifica los datos y las relaciones.',
+                'bloqueado' => 'Este servicio está finalizado y ya no se puede editar.',
             ];
-            $mensaje = $mensajes[$_GET['msg'] ?? ''] ?? '';
+            $codigoMensaje = is_string($_GET['msg'] ?? null) ? $_GET['msg'] : '';
+            $mensaje = $mensajes[$codigoMensaje] ?? '';
+            if ($codigoMensaje === 'error' && !empty($_SESSION['flash_error']) && is_string($_SESSION['flash_error'])) {
+                $mensaje = $_SESSION['flash_error'];
+            }
+            unset($_SESSION['flash_error']);
+            $mensajeEsError = in_array($codigoMensaje, ['error', 'bloqueado'], true);
 
             $rutasCrear = [
                 'clientes' => 'cliente',
@@ -325,7 +332,7 @@ switch ($uri) {
                     'ruta' => 'servicio',
                     'clave' => 'servicios',
                     'registros' => $servicios,
-                    'columnas' => ['ID' => 'id', 'Cliente' => 'cliente', 'Pasajero' => 'pasajero', 'Conductor' => 'conductor', 'Vehículo' => 'vehiculo', 'Destino' => 'destino', 'Fecha' => 'fecha_servicio', 'Hora' => 'hora_servicio', 'Estado' => 'estado'],
+                    'columnas' => ['ID' => 'id', 'Cliente' => 'cliente', 'Pasajero' => 'pasajero', 'Conductor' => 'conductor', 'Tipo de vehículo' => 'tipo_vehiculo', 'Placa' => 'placa', 'Destino' => 'destino', 'Salida' => 'salida', 'Llegada' => 'llegada', 'Estado' => 'estado'],
                 ],
                 [
                     'titulo' => 'Destinos',
@@ -339,7 +346,7 @@ switch ($uri) {
                     'ruta' => 'vehiculo',
                     'clave' => 'vehiculos',
                     'registros' => $vehiculos,
-                    'columnas' => ['ID' => 'id', 'Placa' => 'placa', 'Marca' => 'marca', 'Modelo' => 'modelo', 'Capacidad' => 'capacidad', 'Conductor' => 'conductor'],
+                    'columnas' => ['ID' => 'id', 'Placa' => 'placa', 'Tipo' => 'tipo', 'Marca' => 'marca', 'Modelo' => 'modelo', 'Capacidad' => 'capacidad', 'Conductor' => 'conductor'],
                 ],
             ];
 

@@ -20,7 +20,7 @@ $emailUsuario = $authUser['email'] ?? 'Usuario autenticado';
     <div class="app-shell">
         <aside class="app-sidebar">
             <a class="app-brand" href="<?= $escape(app_url('/')) ?>">
-                <img class="app-brand-logo" src="<?= $escape(app_url('/img/logo-ultra-blanco.png')) ?>" alt="ULTRA Servicio Especial" width="120" height="113">
+                <img class="app-brand-logo" src="<?= $escape(app_url('/img/logo-ultra-3d-sm.webp')) ?>" alt="ULTRA Servicio Especial" width="300" height="262">
                 <span class="app-brand-text">Sistema de transporte</span>
             </a>
 
@@ -68,7 +68,7 @@ $emailUsuario = $authUser['email'] ?? 'Usuario autenticado';
                 </section>
 
                 <?php if ($mensaje !== ''): ?>
-                    <p class="auth-message" role="status" data-type="<?= ($_GET['msg'] ?? '') === 'error' ? 'error' : 'success' ?>"><?= $escape($mensaje) ?></p>
+                    <p class="auth-message" role="status" data-type="<?= !empty($mensajeEsError) ? 'error' : 'success' ?>"><?= $escape($mensaje) ?></p>
                 <?php endif; ?>
 
                 <section aria-labelledby="select-table-title">
@@ -118,11 +118,22 @@ $emailUsuario = $authUser['email'] ?? 'Usuario autenticado';
                                         <?php foreach ($tabla['registros'] as $registro): ?>
                                             <tr>
                                                 <?php foreach ($tabla['columnas'] as $campo): ?>
-                                                    <td class="<?= $campo === 'id' ? 'record-id' : '' ?>"><?= $escape($registro[$campo] ?? '') ?></td>
+                                                    <?php if ($campo === 'estado'): ?>
+                                                        <?php $estadoClase = strtolower(str_replace(' ', '-', (string) ($registro['estado'] ?? ''))); ?>
+                                                        <td><span class="status-badge status-<?= $escape($estadoClase) ?>"><?= $escape($registro['estado'] ?? '') ?></span></td>
+                                                    <?php elseif ($campo === 'placa'): ?>
+                                                        <td><span class="plate"><?= $escape($registro['placa'] ?? '') ?></span></td>
+                                                    <?php else: ?>
+                                                        <td class="<?= $campo === 'id' ? 'record-id' : (in_array($campo, ['salida', 'llegada', 'fecha_servicio', 'hora_servicio'], true) ? 'cell-nowrap' : '') ?>"><?= $escape($registro[$campo] ?? '') ?></td>
+                                                    <?php endif; ?>
                                                 <?php endforeach; ?>
                                                 <td>
                                                     <div class="row-actions">
-                                                        <a class="button" href="<?= $escape(app_url('/' . $tabla['ruta'] . '/editar?id=' . (int) $registro['id'])) ?>">Editar</a>
+                                                        <?php if ($tabla['clave'] === 'servicios' && ($registro['estado'] ?? '') === Servicio::ESTADO_FINALIZADO): ?>
+                                                            <span class="locked-label" title="Los servicios finalizados no se pueden editar">Bloqueado</span>
+                                                        <?php else: ?>
+                                                            <a class="button" href="<?= $escape(app_url('/' . $tabla['ruta'] . '/editar?id=' . (int) $registro['id'])) ?>">Editar</a>
+                                                        <?php endif; ?>
                                                         <form class="delete-form" method="post" action="<?= $escape(app_url('/' . $tabla['ruta'] . '/eliminar')) ?>" data-confirm="¿Confirmas que quieres eliminar este registro?">
                                                             <?= csrf_field() ?>
                                                             <input type="hidden" name="id" value="<?= (int) $registro['id'] ?>">

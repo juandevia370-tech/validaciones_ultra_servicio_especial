@@ -1,19 +1,22 @@
 /* ==========================================================================
    ULTRA Servicio Especial — sistema visual
-   Paleta tomada del logo oficial: morado profundo + plata.
+   Paleta basada en el logo oficial: morados profundos, violeta brillante y plata.
    ========================================================================== */
 :root {
     /* Marca: morados */
-    --brand-950: #1d0729;
-    --brand-900: #2c0a40;
+    --brand-950: #16051f;
+    --brand-900: #1f0a2e;
+    --brand-850: #2c0a40;
     --brand-800: #3c0054;
     --brand-700: #561077;
-    --brand-600: #6a1f8a;
-    --brand-500: #8240a6;
-    --brand-300: #c4a3d8;
-    --brand-200: #e2d1ec;
-    --brand-100: #f2eaf7;
-    --brand-50: #f9f5fc;
+    --brand-600: #6e1f96;
+    --brand-500: #8a35c0;
+    --brand-400: #a65ad8;
+    --brand-300: #c79ce8;
+    --brand-200: #e2cdf2;
+    --brand-150: #ebdcf6;
+    --brand-100: #f2e8f9;
+    --brand-50: #f8f3fc;
 
     /* Marca: plata */
     --silver-700: #5e5c69;
@@ -22,27 +25,28 @@
     --silver-200: #dedde4;
     --silver-100: #efeef3;
 
-    /* Neutros de interfaz */
-    --ink: #22182b;
-    --text: #463d52;
-    --muted: #6f6879;
-    --subtle: #8a8394;
+    /* Neutros de interfaz (tintados de morado) */
+    --ink: #22102e;
+    --text: #44364f;
+    --muted: #6c5f78;
+    --subtle: #877b93;
     --surface: #ffffff;
-    --background: #f6f4f9;
-    --border: #e6e0ee;
-    --border-soft: #f0ecf4;
+    --surface-tint: #fbf7fe;
+    --background: #efe5f7;
+    --border: #dccbea;
+    --border-soft: #ece1f5;
 
     /* Estados */
     --danger: #a51d37;
-    --danger-bg: #fff4f6;
-    --danger-border: #f3cfd6;
+    --danger-bg: #fff1f4;
+    --danger-border: #f3c7d1;
     --success: #1e7253;
-    --success-bg: #effaf5;
-    --success-border: #c4e7d7;
+    --success-bg: #e9f8f0;
+    --success-border: #bfe6d3;
 
-    --focus-ring: 0 0 0 3px rgba(106, 31, 138, .2);
-    --shadow-sm: 0 6px 22px rgba(44, 10, 64, .05);
-    --shadow-lg: 0 24px 70px rgba(44, 10, 64, .16);
+    --focus-ring: 0 0 0 3px rgba(138, 53, 192, .25);
+    --shadow-sm: 0 8px 24px rgba(60, 0, 84, .08);
+    --shadow-lg: 0 30px 80px rgba(10, 2, 16, .55);
 
     color-scheme: light;
     font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
@@ -61,7 +65,10 @@ body {
     min-height: 100vh;
     margin: 0;
     color: var(--text);
-    background: var(--background);
+    background:
+        radial-gradient(ellipse at 100% 0%, rgba(166, 90, 216, .18), transparent 40%),
+        linear-gradient(180deg, #ece0f6 0%, var(--background) 320px);
+    background-attachment: fixed;
 }
 
 a {
@@ -89,12 +96,14 @@ select {
     inset: 0 auto 0 0;
     z-index: 2;
     display: flex;
-    width: 248px;
+    width: 256px;
     flex-direction: column;
-    padding: 26px 16px;
+    padding: 22px 16px;
     background:
-        radial-gradient(ellipse at 0% 0%, rgba(130, 64, 166, .35), transparent 55%),
-        linear-gradient(180deg, var(--brand-900) 0%, var(--brand-800) 60%, #46075f 100%);
+        radial-gradient(ellipse at 0% 0%, rgba(166, 90, 216, .32), transparent 55%),
+        radial-gradient(ellipse at 100% 100%, rgba(138, 53, 192, .25), transparent 50%),
+        linear-gradient(180deg, var(--brand-950) 0%, var(--brand-850) 55%, var(--brand-800) 100%);
+    box-shadow: 8px 0 30px rgba(22, 5, 31, .25);
     color: #fff;
 }
 
@@ -103,7 +112,7 @@ select {
     flex-direction: column;
     align-items: center;
     gap: 8px;
-    padding: 0 10px 22px;
+    padding: 0 4px 18px;
     border-bottom: 1px solid rgba(255, 255, 255, .1);
     color: var(--silver-300);
     font-size: 10px;
@@ -117,12 +126,13 @@ select {
 
 .app-brand-logo {
     display: block;
-    width: 116px;
+    width: 178px;
     height: auto;
+    filter: drop-shadow(0 6px 18px rgba(138, 53, 192, .45));
 }
 
 .sidebar-label {
-    margin: 22px 12px 10px;
+    margin: 20px 12px 10px;
     color: rgba(255, 255, 255, .5);
     font-size: 10px;
     font-weight: 750;
@@ -157,7 +167,7 @@ select {
 }
 
 .table-nav a[aria-current="page"] {
-    background: rgba(255, 255, 255, .14);
+    background: linear-gradient(90deg, rgba(166, 90, 216, .45), rgba(166, 90, 216, .12));
     color: #fff;
 }
 
@@ -176,8 +186,8 @@ select {
     min-width: 26px;
     padding: 2px 7px;
     border-radius: 999px;
-    background: rgba(255, 255, 255, .1);
-    color: rgba(255, 255, 255, .85);
+    background: rgba(255, 255, 255, .12);
+    color: rgba(255, 255, 255, .9);
     font-size: 11px;
     font-variant-numeric: tabular-nums;
     text-align: center;
@@ -210,7 +220,7 @@ select {
 
 .app-main {
     min-height: 100vh;
-    margin-left: 248px;
+    margin-left: 256px;
     padding: 34px clamp(20px, 4vw, 56px) 50px;
 }
 
@@ -220,18 +230,19 @@ select {
     justify-content: space-between;
     gap: 20px;
     max-width: 1500px;
-    margin: 0 auto 32px;
+    margin: 0 auto 30px;
 }
 
 .app-topbar-copy p {
     margin: 0 0 5px;
-    color: var(--muted);
+    color: var(--brand-600);
     font-size: 12px;
+    font-weight: 600;
 }
 
 .app-topbar-copy h1 {
     margin: 0;
-    color: var(--ink);
+    color: var(--brand-800);
     font-size: clamp(24px, 3vw, 32px);
     letter-spacing: -.04em;
 }
@@ -250,8 +261,8 @@ button {
     padding: 0 14px;
     border: 1px solid var(--border);
     border-radius: 10px;
-    background: var(--surface);
-    color: var(--text);
+    background: var(--brand-100);
+    color: var(--brand-800);
     cursor: pointer;
     font-size: 12px;
     font-weight: 700;
@@ -262,21 +273,22 @@ button {
 .button:hover,
 button:hover {
     transform: translateY(-1px);
-    border-color: var(--brand-300);
-    color: var(--brand-700);
+    border-color: var(--brand-400);
+    background: var(--brand-150);
+    color: var(--brand-800);
 }
 
 .button-primary,
 button[type="submit"] {
     border-color: var(--brand-700);
-    background: var(--brand-700);
+    background: linear-gradient(115deg, var(--brand-800), var(--brand-600));
     color: #fff;
 }
 
 .button-primary:hover,
 button[type="submit"]:hover {
     border-color: var(--brand-800);
-    background: var(--brand-800);
+    background: linear-gradient(115deg, var(--brand-900), var(--brand-700));
     color: #fff;
 }
 
@@ -284,15 +296,15 @@ button[type="submit"]:hover {
 button.button-quiet {
     min-height: 37px;
     border-color: var(--border);
-    background: var(--surface);
-    color: var(--muted);
+    background: var(--surface-tint);
+    color: var(--brand-700);
 }
 
 .button-quiet:hover,
 button.button-quiet:hover {
-    border-color: var(--brand-300);
-    background: var(--brand-50);
-    color: var(--brand-700);
+    border-color: var(--brand-400);
+    background: var(--brand-150);
+    color: var(--brand-800);
 }
 
 /* ----- Contenido del panel ----- */
@@ -310,15 +322,16 @@ button.button-quiet:hover {
     padding: 28px 32px;
     border-radius: 18px;
     background:
-        radial-gradient(ellipse at 95% 0%, rgba(199, 197, 207, .35), transparent 45%),
-        linear-gradient(115deg, var(--brand-800) 0%, var(--brand-700) 55%, var(--brand-600) 100%);
-    box-shadow: 0 16px 40px rgba(60, 0, 84, .22);
+        radial-gradient(ellipse at 95% 0%, rgba(199, 156, 232, .4), transparent 45%),
+        radial-gradient(ellipse at 0% 100%, rgba(22, 5, 31, .5), transparent 55%),
+        linear-gradient(115deg, var(--brand-900) 0%, var(--brand-800) 45%, var(--brand-600) 100%);
+    box-shadow: 0 18px 44px rgba(60, 0, 84, .28);
     color: #fff;
 }
 
 .welcome-card p {
     margin: 0 0 7px;
-    color: var(--silver-200);
+    color: var(--brand-300);
     font-size: 11px;
     font-weight: 750;
     letter-spacing: .12em;
@@ -341,14 +354,13 @@ button.button-quiet:hover {
 
 .welcome-card .button-primary {
     flex: 0 0 auto;
-    border-color: #fff;
-    background: #fff;
+    border-color: var(--silver-200);
+    background: linear-gradient(180deg, #fff, var(--silver-100));
     color: var(--brand-800);
 }
 
 .welcome-card .button-primary:hover {
-    border-color: var(--silver-100);
-    background: var(--silver-100);
+    background: var(--silver-200);
     color: var(--brand-900);
 }
 
@@ -362,7 +374,7 @@ button.button-quiet:hover {
 
 .section-heading h2 {
     margin: 0;
-    color: var(--ink);
+    color: var(--brand-800);
     font-size: 17px;
 }
 
@@ -383,11 +395,11 @@ button.button-quiet:hover {
     align-items: center;
     gap: 8px;
     min-height: 37px;
-    padding: 0 12px;
+    padding: 0 13px;
     border: 1px solid var(--border);
     border-radius: 999px;
-    background: var(--surface);
-    color: var(--text);
+    background: var(--brand-150);
+    color: var(--brand-800);
     font-size: 12px;
     font-weight: 650;
     text-decoration: none;
@@ -395,19 +407,19 @@ button.button-quiet:hover {
 }
 
 .table-chip:hover {
-    border-color: var(--brand-300);
-    background: var(--brand-50);
-    color: var(--brand-700);
+    border-color: var(--brand-400);
+    background: var(--brand-200);
 }
 
 .table-chip[aria-current="page"] {
     border-color: var(--brand-700);
-    background: var(--brand-700);
+    background: linear-gradient(115deg, var(--brand-800), var(--brand-600));
+    box-shadow: 0 6px 16px rgba(86, 16, 119, .3);
     color: #fff;
 }
 
 .table-chip-count {
-    color: var(--subtle);
+    color: var(--brand-600);
     font-size: 11px;
 }
 
@@ -423,25 +435,40 @@ button.button-quiet:hover {
     box-shadow: var(--shadow-sm);
 }
 
+.dashboard-content .data-card {
+    margin-top: 20px;
+}
+
 .data-card-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    padding: 17px 20px;
-    border-bottom: 1px solid var(--border-soft);
-    border-top: 3px solid var(--brand-700);
+    padding: 16px 20px;
+    background:
+        radial-gradient(ellipse at 100% 0%, rgba(199, 156, 232, .3), transparent 50%),
+        linear-gradient(115deg, var(--brand-850), var(--brand-700));
 }
 
 .data-card-header h2 {
     margin: 0;
-    color: var(--ink);
+    color: #fff;
     font-size: 15px;
 }
 
 .data-card-header span {
-    color: var(--muted);
+    color: var(--brand-200);
     font-size: 12px;
+}
+
+.data-card-header .button-primary {
+    border-color: rgba(255, 255, 255, .5);
+    background: rgba(255, 255, 255, .14);
+    color: #fff;
+}
+
+.data-card-header .button-primary:hover {
+    background: rgba(255, 255, 255, .24);
 }
 
 .table-scroll {
@@ -456,8 +483,8 @@ table {
 
 th {
     padding: 12px 15px;
-    background: var(--brand-50);
-    color: var(--silver-700);
+    background: var(--brand-150);
+    color: var(--brand-800);
     font-size: 10px;
     font-weight: 750;
     letter-spacing: .07em;
@@ -473,12 +500,22 @@ td {
     vertical-align: middle;
 }
 
+tbody tr:nth-child(even) {
+    background: var(--surface-tint);
+}
+
 tbody tr:hover {
-    background: #fcfaff;
+    background: var(--brand-100);
+}
+
+.cell-nowrap {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
 }
 
 .record-id {
-    color: var(--subtle);
+    color: var(--brand-600);
+    font-weight: 700;
     font-variant-numeric: tabular-nums;
 }
 
@@ -505,16 +542,89 @@ button.delete-button {
     min-height: 31px;
     padding: 0 10px;
     border-color: var(--danger-border);
-    background: var(--surface);
+    background: var(--danger-bg);
     color: var(--danger);
     font-size: 11px;
 }
 
 .delete-button:hover,
 button.delete-button:hover {
-    border-color: #e8aab6;
-    background: var(--danger-bg);
+    border-color: #e8a2b2;
+    background: #ffe5eb;
     color: var(--danger);
+}
+
+/* Estados de servicio, placa y bloqueo */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.status-badge::before {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    content: "";
+}
+
+.status-pendiente {
+    border-color: #f2d49b;
+    background: #fff6e3;
+    color: #8a5a00;
+}
+
+.status-en-proceso {
+    border-color: var(--brand-300);
+    background: var(--brand-150);
+    color: var(--brand-700);
+}
+
+.status-finalizado {
+    border-color: var(--success-border);
+    background: var(--success-bg);
+    color: var(--success);
+}
+
+.plate {
+    display: inline-block;
+    padding: 3px 8px;
+    border: 2px solid var(--ink);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--ink);
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    white-space: nowrap;
+}
+
+.locked-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 31px;
+    padding: 0 10px;
+    border: 1px dashed var(--brand-300);
+    border-radius: 10px;
+    background: var(--brand-100);
+    color: var(--brand-700);
+    cursor: not-allowed;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.locked-label::before {
+    content: "🔒";
+    font-size: 11px;
 }
 
 .empty-state {
@@ -524,25 +634,28 @@ button.delete-button:hover {
     text-align: center;
 }
 
-/* ----- Inicio de sesión ----- */
+/* ----- Inicio de sesión (tema oscuro de marca) ----- */
 .auth-page {
     display: grid;
     min-height: 100vh;
     place-items: center;
     padding: 32px 18px;
     background:
-        radial-gradient(ellipse at 10% 10%, rgba(130, 64, 166, .16), transparent 38%),
-        radial-gradient(ellipse at 90% 92%, rgba(141, 139, 152, .18), transparent 36%),
-        var(--background);
+        radial-gradient(ellipse at 15% 10%, rgba(166, 90, 216, .35), transparent 40%),
+        radial-gradient(ellipse at 90% 95%, rgba(138, 53, 192, .3), transparent 40%),
+        radial-gradient(ellipse at 80% 10%, rgba(199, 197, 207, .12), transparent 35%),
+        linear-gradient(160deg, var(--brand-950) 0%, var(--brand-900) 50%, var(--brand-850) 100%);
+    color: #fff;
 }
 
 .auth-shell {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr);
-    width: min(100%, 940px);
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    width: min(100%, 980px);
     overflow: hidden;
-    border-radius: 24px;
-    background: var(--surface);
+    border: 1px solid rgba(255, 255, 255, .1);
+    border-radius: 26px;
+    background: rgba(255, 255, 255, .03);
     box-shadow: var(--shadow-lg);
 }
 
@@ -550,61 +663,63 @@ button.delete-button:hover {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: space-between;
-    gap: 36px;
-    padding: 52px 40px 44px;
+    justify-content: center;
+    gap: 26px;
+    padding: 44px 36px;
     background:
-        radial-gradient(ellipse at 100% 0%, rgba(199, 197, 207, .28), transparent 50%),
-        radial-gradient(ellipse at 0% 100%, rgba(130, 64, 166, .45), transparent 55%),
-        linear-gradient(160deg, var(--brand-900) 0%, var(--brand-800) 55%, var(--brand-700) 100%);
-    color: #fff;
+        radial-gradient(ellipse at 50% 40%, rgba(166, 90, 216, .35), transparent 60%),
+        linear-gradient(160deg, var(--brand-900) 0%, var(--brand-800) 100%);
     text-align: center;
 }
 
 .auth-aside-logo {
     display: block;
-    width: min(200px, 70%);
+    width: min(340px, 100%);
     height: auto;
-    margin-top: 18px;
+    filter: drop-shadow(0 12px 30px rgba(138, 53, 192, .5));
 }
 
 .auth-aside-tagline {
-    margin: 0 0 22px;
+    margin: 0 0 16px;
     color: var(--silver-200);
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
-    letter-spacing: .22em;
+    letter-spacing: .2em;
     text-transform: uppercase;
 }
 
 .auth-aside-list {
-    display: grid;
-    gap: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
     margin: 0;
     padding: 0;
     list-style: none;
 }
 
 .auth-aside-list li {
-    padding: 10px 16px;
-    border: 1px solid rgba(255, 255, 255, .14);
+    padding: 8px 14px;
+    border: 1px solid rgba(255, 255, 255, .16);
     border-radius: 999px;
     background: rgba(255, 255, 255, .06);
     color: rgba(255, 255, 255, .86);
-    font-size: 13px;
+    font-size: 12px;
 }
 
 .auth-card {
     width: 100%;
-    padding: 52px 48px 40px;
-    background: var(--surface);
+    padding: 52px 46px 40px;
+    background: linear-gradient(180deg, rgba(44, 10, 64, .92), rgba(31, 10, 46, .96));
+    color: #fff;
 }
 
 .auth-logo {
     display: none;
-    width: 150px;
+    width: 210px;
     height: auto;
     margin: 0 auto 22px;
+    filter: drop-shadow(0 10px 24px rgba(138, 53, 192, .5));
 }
 
 /* Compatibilidad con la marca anterior */
@@ -612,7 +727,7 @@ button.delete-button:hover {
     display: inline-flex;
     align-items: center;
     gap: 11px;
-    color: var(--ink);
+    color: #fff;
     font-size: 14px;
     text-decoration: none;
 }
@@ -623,7 +738,7 @@ button.delete-button:hover {
 
 .auth-eyebrow {
     margin: 0 0 9px;
-    color: var(--brand-600);
+    color: var(--brand-300);
     font-size: 11px;
     font-weight: 750;
     letter-spacing: .14em;
@@ -632,14 +747,14 @@ button.delete-button:hover {
 
 .auth-heading h1 {
     margin: 0;
-    color: var(--ink);
+    color: #fff;
     font-size: clamp(28px, 6vw, 34px);
     letter-spacing: -.04em;
 }
 
 .auth-subtitle {
     margin: 9px 0 0;
-    color: var(--muted);
+    color: rgba(255, 255, 255, .7);
     font-size: 14px;
     line-height: 1.5;
 }
@@ -659,20 +774,30 @@ button.delete-button:hover {
     font-weight: 650;
 }
 
+.auth-form .form-field {
+    color: var(--brand-200);
+}
+
 .form-field input,
 .crud-form input,
 .crud-form select {
     width: 100%;
     min-height: 46px;
     padding: 0 13px;
-    border: 1px solid var(--silver-200);
+    border: 1px solid var(--border);
     border-radius: 10px;
     outline: none;
-    background: var(--surface);
+    background: var(--surface-tint);
     color: var(--ink);
     font-size: 14px;
     font-weight: 400;
-    transition: border-color 150ms ease, box-shadow 150ms ease;
+    transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+}
+
+.auth-form .form-field input {
+    border-color: rgba(255, 255, 255, .16);
+    background: rgba(255, 255, 255, .06);
+    color: #fff;
 }
 
 .form-field input::placeholder,
@@ -680,21 +805,32 @@ button.delete-button:hover {
     color: var(--subtle);
 }
 
+.auth-form .form-field input::placeholder {
+    color: rgba(226, 205, 242, .55);
+}
+
 .form-field input:focus,
 .crud-form input:focus,
 .crud-form select:focus {
-    border-color: var(--brand-600);
+    border-color: var(--brand-500);
+    background: var(--surface);
     box-shadow: var(--focus-ring);
+}
+
+.auth-form .form-field input:focus {
+    border-color: var(--brand-400);
+    background: rgba(255, 255, 255, .1);
+    box-shadow: 0 0 0 3px rgba(166, 90, 216, .35);
 }
 
 .auth-submit,
 button.auth-submit {
     min-height: 48px;
-    margin-top: 4px;
+    margin-top: 6px;
     border: 0;
     border-radius: 10px;
-    background: linear-gradient(115deg, var(--brand-800), var(--brand-600));
-    box-shadow: 0 10px 24px rgba(60, 0, 84, .25);
+    background: linear-gradient(115deg, var(--brand-600), var(--brand-400));
+    box-shadow: 0 10px 28px rgba(138, 53, 192, .45);
     color: #fff;
     font-size: 14px;
     font-weight: 750;
@@ -702,7 +838,7 @@ button.auth-submit {
 
 .auth-submit:hover,
 button.auth-submit:hover {
-    background: linear-gradient(115deg, var(--brand-900), var(--brand-700));
+    background: linear-gradient(115deg, var(--brand-700), var(--brand-500));
     color: #fff;
 }
 
@@ -723,11 +859,17 @@ button.auth-submit:hover {
     color: var(--success);
 }
 
+.auth-card .auth-message {
+    border-color: rgba(255, 140, 165, .4);
+    background: rgba(165, 29, 55, .22);
+    color: #ffc6d2;
+}
+
 .auth-note {
     margin: 24px 0 0;
     padding-top: 17px;
-    border-top: 1px solid var(--border-soft);
-    color: var(--subtle);
+    border-top: 1px solid rgba(255, 255, 255, .12);
+    color: rgba(226, 205, 242, .65);
     font-size: 11px;
     line-height: 1.5;
     text-align: center;
@@ -735,22 +877,26 @@ button.auth-submit:hover {
 
 /* ----- Formularios de crear / editar ----- */
 .crud-page {
-    width: min(100% - 32px, 720px);
+    --crud-pad: clamp(20px, 5vw, 36px);
+    width: min(100% - 32px, 760px);
     margin: 42px auto;
-    padding: clamp(22px, 5vw, 38px);
+    overflow: hidden;
+    padding: 0 var(--crud-pad) var(--crud-pad);
     border: 1px solid var(--border);
-    border-top: 4px solid var(--brand-700);
     border-radius: 18px;
-    background:
-        url("../img/logo-ultra-simbolo.png") no-repeat right clamp(18px, 4vw, 32px) top clamp(18px, 4vw, 28px) / 54px auto,
-        var(--surface);
+    background: var(--surface);
     box-shadow: var(--shadow-sm);
 }
 
 .crud-page h2 {
-    margin: 0 0 24px;
-    padding-right: 70px;
-    color: var(--ink);
+    min-height: 86px;
+    margin: 0 calc(var(--crud-pad) * -1) 26px;
+    padding: 26px 118px 26px var(--crud-pad);
+    background:
+        url("../img/logo-ultra-3d-sm.webp") no-repeat right var(--crud-pad) center / auto 62px,
+        radial-gradient(ellipse at 100% 0%, rgba(199, 156, 232, .35), transparent 50%),
+        linear-gradient(115deg, var(--brand-900), var(--brand-700));
+    color: #fff;
     font-size: 22px;
     letter-spacing: -.03em;
 }
@@ -776,12 +922,51 @@ button.auth-submit:hover {
 }
 
 .crud-form button[type="submit"] {
-    min-height: 44px;
+    min-height: 46px;
     margin-top: 3px;
+    font-size: 14px;
 }
 
 .crud-form input[type="hidden"] {
     display: none;
+}
+
+.form-section {
+    display: grid;
+    gap: 12px;
+    margin: 4px 0 0;
+    padding: 16px 18px 18px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--brand-50);
+}
+
+.form-section legend {
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--brand-700);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 750;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 16px;
+}
+
+.form-pair {
+    display: grid;
+    gap: 8px;
+}
+
+.form-hint {
+    margin: -8px 0 0;
+    color: var(--muted);
+    font-size: 12px;
 }
 
 button:disabled {
@@ -795,7 +980,7 @@ button:disabled {
     .app-sidebar {
         position: static;
         width: auto;
-        padding: 14px 16px 12px;
+        padding: 12px 16px;
     }
 
     .app-brand {
@@ -807,7 +992,7 @@ button:disabled {
     }
 
     .app-brand-logo {
-        width: 64px;
+        width: 92px;
     }
 
     .sidebar-label,
@@ -846,7 +1031,7 @@ button:disabled {
     .auth-shell {
         grid-template-columns: 1fr;
         width: min(100%, 460px);
-        border-radius: 20px;
+        border-radius: 22px;
     }
 
     .auth-aside {
@@ -854,7 +1039,7 @@ button:disabled {
     }
 
     .auth-card {
-        padding: 34px 26px 28px;
+        padding: 30px 24px 26px;
     }
 
     .auth-logo {
@@ -883,11 +1068,13 @@ button:disabled {
         flex-direction: column;
     }
 
-    .auth-card {
-        padding: 28px 21px 24px;
+    .form-grid {
+        grid-template-columns: 1fr;
     }
-}
 
-.dashboard-content .data-card {
-    margin-top: 20px;
+    .crud-page h2 {
+        padding-right: 96px;
+        background-size: auto 46px, auto, auto;
+        font-size: 19px;
+    }
 }
