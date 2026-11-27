@@ -44,21 +44,28 @@ class ServicioController
         require __DIR__ . '/../views/servicio/crear.php';
     }
 
+    private function datosFormulario()
+    {
+        $campos = [
+            'cliente_id', 'pasajero_id', 'conductor_id', 'vehiculo_id', 'destino_id',
+            'telefono_contacto', 'ciudad_origen', 'direccion_origen', 'ciudad_destino',
+            'direccion_destino', 'fecha_servicio', 'hora_servicio', 'ticket', 'flete',
+            'estado', 'observaciones',
+        ];
+        $datos = [];
+        foreach ($campos as $campo) {
+            $datos[$campo] = is_string($_POST[$campo] ?? null) ? $_POST[$campo] : '';
+        }
+
+        return $datos;
+    }
+
     public function guardar()
     {
         try {
-            return $this->servicioModel->guardar(
-                $_POST['cliente_id'] ?? '',
-                $_POST['pasajero_id'] ?? '',
-                $_POST['conductor_id'] ?? '',
-                $_POST['vehiculo_id'] ?? '',
-                $_POST['destino_id'] ?? '',
-                $_POST['fecha_servicio'] ?? '',
-                $_POST['hora_servicio'] ?? '',
-                $_POST['estado'] ?? ''
-            );
+            return $this->servicioModel->guardar($this->datosFormulario());
         } catch (InvalidArgumentException $e) {
-            error_log('Datos de servicio no válidos: ' . $e->getMessage());
+            $_SESSION['flash_error'] = $e->getMessage();
             return false;
         }
     }
@@ -104,24 +111,16 @@ class ServicioController
     public function actualizar()
     {
         $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
-        try {
-            $ok = $id && $this->servicioModel->actualizar(
-                $id,
-                $_POST['cliente_id'] ?? '',
-                $_POST['pasajero_id'] ?? '',
-                $_POST['conductor_id'] ?? '',
-                $_POST['vehiculo_id'] ?? '',
-                $_POST['destino_id'] ?? '',
-                $_POST['fecha_servicio'] ?? '',
-                $_POST['hora_servicio'] ?? '',
-                $_POST['estado'] ?? ''
-            );
-        } catch (InvalidArgumentException $e) {
-            error_log('Datos de servicio no válidos: ' . $e->getMessage());
-            $ok = false;
+        $ok = false;
+        if ($id && $id > 0) {
+            try {
+                $ok = $this->servicioModel->actualizar($id, $this->datosFormulario());
+            } catch (InvalidArgumentException $e) {
+                $_SESSION['flash_error'] = $e->getMessage();
+            }
         }
 
-        header('Location: ' . app_url('/?msg=' . ($ok ? 'editado' : 'error')));
+        header('Location: ' . app_url('/?tabla=servicios&msg=' . ($ok ? 'editado' : 'error')));
         exit;
     }
 

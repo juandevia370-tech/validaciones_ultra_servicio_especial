@@ -18,6 +18,10 @@
     <label for="conductor_telefono">Teléfono</label>
     <input type="tel" id="conductor_telefono" name="telefono" placeholder="Número de teléfono" required>
 
+    <label for="conductor_observaciones">Observaciones de la empresa</label>
+    <textarea id="conductor_observaciones" name="observaciones" rows="4" maxlength="1000" placeholder="Llamados de atención, reconocimientos, novedades... (opcional)"></textarea>
+
     <button type="submit">Guardar conductor</button>
+    <a href="<?= htmlspecialchars(app_url('/?tabla=conductores'), ENT_QUOTES, 'UTF-8') ?>">Volver</a>
 </form>
 </main>

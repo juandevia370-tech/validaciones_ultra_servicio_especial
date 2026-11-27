@@ -23,6 +23,9 @@ $e = static function ($valor): string {
     <label for="conductor_telefono">Teléfono</label>
     <input type="tel" id="conductor_telefono" name="telefono" value="<?= $e($conductor['telefono']) ?>" required>
 
+    <label for="conductor_observaciones">Observaciones de la empresa</label>
+    <textarea id="conductor_observaciones" name="observaciones" rows="4" maxlength="1000" placeholder="Llamados de atención, reconocimientos, novedades... (opcional)"><?= $e($conductor['observaciones'] ?? '') ?></textarea>
+
     <button type="submit">Guardar cambios</button>
     <a href="<?= htmlspecialchars(app_url('/'), ENT_QUOTES, 'UTF-8') ?>">Cancelar</a>
 </form>

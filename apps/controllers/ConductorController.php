@@ -28,7 +28,8 @@ class ConductorController
             $_POST['nombre'] ?? '',
             $_POST['documento'] ?? '',
             $_POST['licencia'] ?? '',
-            $_POST['telefono'] ?? ''
+            $_POST['telefono'] ?? '',
+            $_POST['observaciones'] ?? ''
         );
     }
 
@@ -66,7 +67,8 @@ class ConductorController
             $_POST['nombre'] ?? '',
             $_POST['documento'] ?? '',
             $_POST['licencia'] ?? '',
-            $_POST['telefono'] ?? ''
+            $_POST['telefono'] ?? '',
+            $_POST['observaciones'] ?? ''
         );
 
         header('Location: ' . app_url('/?msg=' . ($ok ? 'editado' : 'error')));

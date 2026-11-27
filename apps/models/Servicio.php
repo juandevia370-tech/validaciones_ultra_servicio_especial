@@ -102,104 +102,113 @@ class Servicio
         return $this->duracionMinutos;
     }
 
-    public function guardar($clienteId, $pasajeroId, $conductorId, $vehiculoId, $destinoId, $fecha, $hora, $estado)
+    /**
+     * Valida y normaliza los datos de un servicio (campos de la confirmación
+     * que se envía al conductor). Lanza InvalidArgumentException con un
+     * mensaje claro si algo no es válido.
+     */
+    private function validarDatos(array $datos)
     {
+        $parametros = [];
         $ids = [
-            'cliente' => &$clienteId,
-            'pasajero' => &$pasajeroId,
-            'conductor' => &$conductorId,
-            'vehículo' => &$vehiculoId,
-            'destino' => &$destinoId
+            'cliente_id' => 'cliente',
+            'pasajero_id' => 'pasajero',
+            'conductor_id' => 'conductor',
+            'vehiculo_id' => 'vehículo',
+            'destino_id' => 'ruta',
         ];
-
-        foreach ($ids as $nombre => &$id) {
-            $id = filter_var($id, FILTER_VALIDATE_INT);
-            if ($id === false || $id < 1) {
-                throw new InvalidArgumentException('El ID de ' . $nombre . ' no es válido.');
+        foreach ($ids as $campo => $nombre) {
+            $valor = filter_var($datos[$campo] ?? null, FILTER_VALIDATE_INT);
+            if ($valor === false || $valor < 1) {
+                throw new InvalidArgumentException('Selecciona un ' . $nombre . ' válido.');
             }
+            $parametros[':' . $campo] = $valor;
         }
-        unset($id);
 
-        $fecha = trim($fecha);
-        $hora = trim($hora);
-        $estado = trim($estado);
-        if ($fecha === '' || $hora === '' || $estado === '') {
-            throw new InvalidArgumentException('Completa la fecha, hora y estado del servicio.');
+        $textos = [
+            'telefono_contacto' => ['Teléfono', 20, true],
+            'ciudad_origen' => ['Ciudad de origen', 100, true],
+            'direccion_origen' => ['Dirección de origen', 150, true],
+            'ciudad_destino' => ['Ciudad de destino', 100, true],
+            'direccion_destino' => ['Dirección de destino', 150, true],
+            'ticket' => ['Ticket', 30, false],
+            'estado' => ['Estado', 30, true],
+            'observaciones' => ['Observaciones', 1000, false],
+        ];
+        foreach ($textos as $campo => [$etiqueta, $maximo, $obligatorio]) {
+            $valor = trim((string) ($datos[$campo] ?? ''));
+            if ($obligatorio && $valor === '') {
+                throw new InvalidArgumentException('Completa el campo "' . $etiqueta . '".');
+            }
+            if (mb_strlen($valor) > $maximo) {
+                throw new InvalidArgumentException('"' . $etiqueta . '" admite máximo ' . $maximo . ' caracteres.');
+            }
+            $parametros[':' . $campo] = $valor !== '' ? $valor : null;
         }
+
+        $fecha = trim((string) ($datos['fecha_servicio'] ?? ''));
+        $hora = trim((string) ($datos['hora_servicio'] ?? ''));
+        $fechaValida = DateTime::createFromFormat('!Y-m-d', $fecha);
+        if (!$fechaValida || $fechaValida->format('Y-m-d') !== $fecha) {
+            throw new InvalidArgumentException('La fecha del servicio no es válida.');
+        }
+        if (!preg_match('/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/', $hora)) {
+            throw new InvalidArgumentException('La hora del servicio no es válida.');
+        }
+        $parametros[':fecha_servicio'] = $fecha;
+        $parametros[':hora_servicio'] = strlen($hora) === 5 ? $hora . ':00' : $hora;
+
+        $flete = str_replace([' ', '$'], '', (string) ($datos['flete'] ?? ''));
+        $flete = filter_var($flete, FILTER_VALIDATE_FLOAT);
+        if ($flete === false || $flete < 0 || $flete > 9999999999) {
+            throw new InvalidArgumentException('El flete debe ser un valor numérico mayor o igual a cero.');
+        }
+        $parametros[':flete'] = number_format($flete, 2, '.', '');
+
+        return $parametros;
+    }
+
+    public function guardar($datos)
+    {
+        $parametros = $this->validarDatos($datos);
 
         try {
             $sql = 'INSERT INTO servicios
                         (cliente_id, pasajero_id, conductor_id, vehiculo_id, destino_id,
-                         fecha_servicio, hora_servicio, estado)
+                         telefono_contacto, ciudad_origen, direccion_origen, ciudad_destino,
+                         direccion_destino, fecha_servicio, hora_servicio, ticket, flete,
+                         estado, observaciones)
                     VALUES
                         (:cliente_id, :pasajero_id, :conductor_id, :vehiculo_id, :destino_id,
-                         :fecha_servicio, :hora_servicio, :estado)';
-            $consulta = $this->conexion->prepare($sql);
-            $consulta->bindParam(':cliente_id', $clienteId, PDO::PARAM_INT);
-            $consulta->bindParam(':pasajero_id', $pasajeroId, PDO::PARAM_INT);
-            $consulta->bindParam(':conductor_id', $conductorId, PDO::PARAM_INT);
-            $consulta->bindParam(':vehiculo_id', $vehiculoId, PDO::PARAM_INT);
-            $consulta->bindParam(':destino_id', $destinoId, PDO::PARAM_INT);
-            $consulta->bindParam(':fecha_servicio', $fecha);
-            $consulta->bindParam(':hora_servicio', $hora);
-            $consulta->bindParam(':estado', $estado);
+                         :telefono_contacto, :ciudad_origen, :direccion_origen, :ciudad_destino,
+                         :direccion_destino, :fecha_servicio, :hora_servicio, :ticket, :flete,
+                         :estado, :observaciones)';
 
-            if (!$consulta->execute()) {
-                return false;
-            }
-
-            return $this->obtenerTodos();
+            return $this->conexion->prepare($sql)->execute($parametros);
         } catch (PDOException $e) {
             error_log('Error al guardar el servicio: ' . $e->getMessage());
             return false;
         }
     }
 
-
-    public function actualizar($id, $clienteId, $pasajeroId, $conductorId, $vehiculoId, $destinoId, $fecha, $hora, $estado)
+    public function actualizar($id, $datos)
     {
-        $ids = [
-            'cliente' => &$clienteId,
-            'pasajero' => &$pasajeroId,
-            'conductor' => &$conductorId,
-            'vehículo' => &$vehiculoId,
-            'destino' => &$destinoId,
-        ];
-
-        foreach ($ids as $nombre => &$valorId) {
-            $valorId = filter_var($valorId, FILTER_VALIDATE_INT);
-            if ($valorId === false || $valorId < 1) {
-                throw new InvalidArgumentException('El ID de ' . $nombre . ' no es válido.');
-            }
-        }
-        unset($valorId);
-
-        $fecha = trim($fecha);
-        $hora = trim($hora);
-        $estado = trim($estado);
-        if ($fecha === '' || $hora === '' || $estado === '') {
-            throw new InvalidArgumentException('Completa la fecha, hora y estado del servicio.');
-        }
+        $parametros = $this->validarDatos($datos);
+        $parametros[':id'] = (int) $id;
 
         try {
             $sql = 'UPDATE servicios
                     SET cliente_id = :cliente_id, pasajero_id = :pasajero_id,
                         conductor_id = :conductor_id, vehiculo_id = :vehiculo_id,
-                        destino_id = :destino_id, fecha_servicio = :fecha_servicio,
-                        hora_servicio = :hora_servicio, estado = :estado
+                        destino_id = :destino_id, telefono_contacto = :telefono_contacto,
+                        ciudad_origen = :ciudad_origen, direccion_origen = :direccion_origen,
+                        ciudad_destino = :ciudad_destino, direccion_destino = :direccion_destino,
+                        fecha_servicio = :fecha_servicio, hora_servicio = :hora_servicio,
+                        ticket = :ticket, flete = :flete, estado = :estado,
+                        observaciones = :observaciones
                     WHERE id = :id';
 
-            return $this->conexion->prepare($sql)->execute([
-                ':cliente_id' => $clienteId,
-                ':pasajero_id' => $pasajeroId,
-                ':conductor_id' => $conductorId,
-                ':vehiculo_id' => $vehiculoId,
-                ':destino_id' => $destinoId,
-                ':fecha_servicio' => $fecha,
-                ':hora_servicio' => $hora,
-                ':estado' => $estado,
-                ':id' => (int) $id,
-            ]);
+            return $this->conexion->prepare($sql)->execute($parametros);
         } catch (PDOException $e) {
             error_log('Error al actualizar el servicio: ' . $e->getMessage());
             return false;
@@ -221,166 +230,83 @@ class Servicio
         }
     }
 
+    private function consultaBase()
+    {
+        return "SELECT
+                    servicios.*,
+                    clientes.nombre AS cliente,
+                    pasajeros.nombre AS pasajero,
+                    pasajeros.telefono AS telefono_pasajero,
+                    conductores.nombre AS conductor,
+                    CONCAT(vehiculos.marca, ' ', vehiculos.modelo, ' - ', vehiculos.placa) AS vehiculo,
+                    CONCAT(destinos.ciudad_origen, ' - ', destinos.ciudad_destino) AS destino,
+                    destinos.tarifa
+                FROM servicios
+                LEFT JOIN clientes ON servicios.cliente_id = clientes.id
+                LEFT JOIN pasajeros ON servicios.pasajero_id = pasajeros.id
+                LEFT JOIN conductores ON servicios.conductor_id = conductores.id
+                LEFT JOIN vehiculos ON servicios.vehiculo_id = vehiculos.id
+                LEFT JOIN destinos ON servicios.destino_id = destinos.id";
+    }
+
+    /**
+     * Agrega campos de presentación para la tabla del panel.
+     */
+    private function prepararParaVista(array $servicio)
+    {
+        $unir = static function ($ciudad, $direccion) {
+            $partes = array_filter([trim((string) $ciudad), trim((string) $direccion)], 'strlen');
+            return $partes ? implode(' — ', $partes) : '—';
+        };
+
+        $servicio['telefono'] = $servicio['telefono_contacto'] ?: ($servicio['telefono_pasajero'] ?? '');
+        $servicio['origen'] = $unir($servicio['ciudad_origen'] ?? '', $servicio['direccion_origen'] ?? '');
+        $servicio['destino_completo'] = $unir($servicio['ciudad_destino'] ?? '', $servicio['direccion_destino'] ?? '');
+        $servicio['fecha_hora'] = trim(($servicio['fecha_servicio'] ?? '') . ' ' . substr((string) ($servicio['hora_servicio'] ?? ''), 0, 5));
+        $servicio['flete_legible'] = $servicio['flete'] !== null && $servicio['flete'] !== ''
+            ? '$' . number_format((float) $servicio['flete'], 0, ',', '.')
+            : '—';
+        $observaciones = trim((string) ($servicio['observaciones'] ?? ''));
+        $servicio['observaciones_corta'] = mb_strlen($observaciones) > 60
+            ? mb_substr($observaciones, 0, 57) . '…'
+            : ($observaciones !== '' ? $observaciones : '—');
+
+        return $servicio;
+    }
+
     public function obtenerTodos()
     {
         try {
-
-            $sql = "SELECT
-                        servicios.id,
-
-                        clientes.nombre AS cliente,
-
-                        pasajeros.nombre AS pasajero,
-
-                        conductores.nombre AS conductor,
-
-                        CONCAT(
-                            vehiculos.marca,
-                            ' ',
-                            vehiculos.modelo,
-                            ' - ',
-                            vehiculos.placa
-                        ) AS vehiculo,
-
-                        CONCAT(
-                            destinos.ciudad_origen,
-                            ' - ',
-                            destinos.ciudad_destino
-                        ) AS destino,
-
-                        destinos.tarifa,
-
-                        servicios.fecha_servicio,
-                        servicios.hora_servicio,
-                        servicios.estado
-
-                    FROM servicios
-
-                    LEFT JOIN clientes
-                        ON servicios.cliente_id = clientes.id
-
-                    LEFT JOIN pasajeros
-                        ON servicios.pasajero_id = pasajeros.id
-
-                    LEFT JOIN conductores
-                        ON servicios.conductor_id = conductores.id
-
-                    LEFT JOIN vehiculos
-                        ON servicios.vehiculo_id = vehiculos.id
-
-                    LEFT JOIN destinos
-                        ON servicios.destino_id = destinos.id
-
-                    ORDER BY servicios.id DESC";
-
-            $consulta = $this->conexion->prepare($sql);
-
+            $consulta = $this->conexion->prepare($this->consultaBase() . ' ORDER BY servicios.id DESC');
             $consulta->execute();
 
-            return $consulta->fetchAll(PDO::FETCH_ASSOC);
-
+            return array_map([$this, 'prepararParaVista'], $consulta->fetchAll(PDO::FETCH_ASSOC));
         } catch (PDOException $e) {
-
-            error_log("Error al obtener los servicios: " . $e->getMessage());
-
+            error_log('Error al obtener los servicios: ' . $e->getMessage());
             return [];
         }
     }
 
-
     public function getById($id)
     {
         try {
-
             if ($id <= 0) {
-
-                throw new Exception(
-                    "El ID del servicio no es válido."
-                );
+                throw new Exception('El ID del servicio no es válido.');
             }
 
-            $sql = "SELECT
-                        servicios.id,
-                        servicios.cliente_id,
-                        servicios.pasajero_id,
-                        servicios.conductor_id,
-                        servicios.vehiculo_id,
-                        servicios.destino_id,
-
-                        clientes.nombre AS cliente,
-
-                        pasajeros.nombre AS pasajero,
-
-                        conductores.nombre AS conductor,
-
-                        CONCAT(
-                            vehiculos.marca,
-                            ' ',
-                            vehiculos.modelo,
-                            ' - ',
-                            vehiculos.placa
-                        ) AS vehiculo,
-
-                        CONCAT(
-                            destinos.ciudad_origen,
-                            ' - ',
-                            destinos.ciudad_destino
-                        ) AS destino,
-
-                        destinos.tarifa,
-
-                        servicios.fecha_servicio,
-                        servicios.hora_servicio,
-                        servicios.estado
-
-                    FROM servicios
-
-                    LEFT JOIN clientes
-                        ON servicios.cliente_id = clientes.id
-
-                    LEFT JOIN pasajeros
-                        ON servicios.pasajero_id = pasajeros.id
-
-                    LEFT JOIN conductores
-                        ON servicios.conductor_id = conductores.id
-
-                    LEFT JOIN vehiculos
-                        ON servicios.vehiculo_id = vehiculos.id
-
-                    LEFT JOIN destinos
-                        ON servicios.destino_id = destinos.id
-
-                    WHERE servicios.id = :id";
-
-            $consulta = $this->conexion->prepare($sql);
-
-            $consulta->bindParam(
-                ':id',
-                $id,
-                PDO::PARAM_INT
-            );
-
+            $consulta = $this->conexion->prepare($this->consultaBase() . ' WHERE servicios.id = :id');
+            $consulta->bindValue(':id', (int) $id, PDO::PARAM_INT);
             $consulta->execute();
-
-            $servicio = $consulta->fetch(
-                PDO::FETCH_ASSOC
-            );
+            $servicio = $consulta->fetch(PDO::FETCH_ASSOC);
 
             if (!$servicio) {
-
-                throw new Exception(
-                    "Servicio no encontrado."
-                );
+                throw new Exception('Servicio no encontrado.');
             }
 
-            return $servicio;
-
+            return $this->prepararParaVista($servicio);
         } catch (Exception $e) {
-
-            error_log("Error: " . $e->getMessage());
-
+            error_log('Error: ' . $e->getMessage());
             return null;
         }
     }
 }
-?>

@@ -891,3 +891,84 @@ button:disabled {
 .dashboard-content .data-card {
     margin-top: 20px;
 }
+
+/* ----- Formularios con secciones (servicios y conductores) ----- */
+.crud-form textarea {
+    width: 100%;
+    min-height: 96px;
+    padding: 11px 13px;
+    border: 1px solid var(--silver-200);
+    border-radius: 10px;
+    outline: none;
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
+    font-size: 14px;
+    line-height: 1.5;
+    resize: vertical;
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.crud-form textarea::placeholder {
+    color: var(--subtle);
+}
+
+.crud-form textarea:focus {
+    border-color: var(--brand-600);
+    box-shadow: var(--focus-ring);
+}
+
+.form-section {
+    display: grid;
+    gap: 12px;
+    margin: 4px 0 0;
+    padding: 16px 18px 18px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--brand-50);
+}
+
+.form-section legend {
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--brand-700);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 750;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 16px;
+}
+
+.form-pair {
+    display: grid;
+    gap: 8px;
+}
+
+.form-hint {
+    margin: -4px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+@media (max-width: 560px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ----- Logo 3D en el inicio de sesión ----- */
+.auth-aside-logo-3d {
+    width: min(300px, 100%);
+    margin-top: 0;
+    filter: drop-shadow(0 12px 30px rgba(130, 64, 166, .45));
+}
+
+.auth-logo-3d {
+    width: 200px;
+}

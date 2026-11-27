@@ -9,21 +9,36 @@ class Conductor
         $this->conexion = $conexion;
     }
 
-    public function guardar($nombre, $documento, $licencia, $telefono)
+    /**
+     * Observaciones de la empresa sobre el conductor (opcional, máximo 1000 caracteres).
+     */
+    private static function normalizarObservaciones($observaciones)
+    {
+        $observaciones = trim((string) $observaciones);
+        if (mb_strlen($observaciones) > 1000) {
+            $observaciones = mb_substr($observaciones, 0, 1000);
+        }
+
+        return $observaciones !== '' ? $observaciones : null;
+    }
+
+    public function guardar($nombre, $documento, $licencia, $telefono, $observaciones = '')
     {
         try {
+            $observaciones = self::normalizarObservaciones($observaciones);
             $nombre = trim($nombre);
             $documento = trim($documento);
             $licencia = trim($licencia);
             $telefono = trim($telefono);
 
-        $sql = 'INSERT INTO conductores (nombre, documento, licencia, telefono)
-                VALUES (:nombre, :documento, :licencia, :telefono)';
+        $sql = 'INSERT INTO conductores (nombre, documento, licencia, telefono, observaciones)
+                VALUES (:nombre, :documento, :licencia, :telefono, :observaciones)';
         $consulta = $this->conexion->prepare($sql);
         $consulta->bindParam(':nombre', $nombre);
         $consulta->bindParam(':documento', $documento);
         $consulta->bindParam(':licencia', $licencia);
         $consulta->bindParam(':telefono', $telefono);
+        $consulta->bindParam(':observaciones', $observaciones);
 
             if (!$consulta->execute()) {
                 return false;
@@ -46,7 +61,14 @@ class Conductor
 
             $consulta->execute();
 
-            return $consulta->fetchAll(PDO::FETCH_ASSOC);
+            return array_map(static function ($conductor) {
+                $texto = trim((string) ($conductor['observaciones'] ?? ''));
+                $conductor['observaciones_corta'] = mb_strlen($texto) > 60
+                    ? mb_substr($texto, 0, 57) . '…'
+                    : ($texto !== '' ? $texto : '—');
+
+                return $conductor;
+            }, $consulta->fetchAll(PDO::FETCH_ASSOC));
 
         } catch (PDOException $e) {
 
@@ -99,12 +121,13 @@ class Conductor
         }
     }
 
-    public function actualizar($id, $nombre, $documento, $licencia, $telefono)
+    public function actualizar($id, $nombre, $documento, $licencia, $telefono, $observaciones = '')
     {
         try {
             $sql = 'UPDATE conductores
                     SET nombre = :nombre, documento = :documento,
-                        licencia = :licencia, telefono = :telefono
+                        licencia = :licencia, telefono = :telefono,
+                        observaciones = :observaciones
                     WHERE id = :id';
 
             return $this->conexion->prepare($sql)->execute([
@@ -112,6 +135,7 @@ class Conductor
                 ':documento' => trim($documento),
                 ':licencia' => trim($licencia),
                 ':telefono' => trim($telefono),
+                ':observaciones' => self::normalizarObservaciones($observaciones),
                 ':id' => (int) $id,
             ]);
         } catch (PDOException $e) {

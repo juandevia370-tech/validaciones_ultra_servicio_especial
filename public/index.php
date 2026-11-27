@@ -287,7 +287,14 @@ switch ($uri) {
                 'eliminado' => 'Registro eliminado correctamente.',
                 'error' => 'No se pudo completar la operación. Verifica los datos y las relaciones.',
             ];
-            $mensaje = $mensajes[$_GET['msg'] ?? ''] ?? '';
+            $codigoMensaje = is_string($_GET['msg'] ?? null) ? $_GET['msg'] : '';
+            $mensaje = $mensajes[$codigoMensaje] ?? '';
+            // Motivo concreto de un error de validación (por ejemplo, un campo vacío).
+            if ($codigoMensaje === 'error' && !empty($_SESSION['flash_error']) && is_string($_SESSION['flash_error'])) {
+                $mensaje = $_SESSION['flash_error'];
+            }
+            unset($_SESSION['flash_error']);
+            $mensajeEsError = $codigoMensaje === 'error';
 
             $rutasCrear = [
                 'clientes' => 'cliente',
@@ -311,7 +318,7 @@ switch ($uri) {
                     'ruta' => 'conductor',
                     'clave' => 'conductores',
                     'registros' => $conductores,
-                    'columnas' => ['ID' => 'id', 'Nombre' => 'nombre', 'Documento' => 'documento', 'Licencia' => 'licencia', 'Teléfono' => 'telefono'],
+                    'columnas' => ['ID' => 'id', 'Nombre' => 'nombre', 'Documento' => 'documento', 'Licencia' => 'licencia', 'Teléfono' => 'telefono', 'Observaciones' => 'observaciones_corta'],
                 ],
                 [
                     'titulo' => 'Pasajeros',
@@ -325,7 +332,7 @@ switch ($uri) {
                     'ruta' => 'servicio',
                     'clave' => 'servicios',
                     'registros' => $servicios,
-                    'columnas' => ['ID' => 'id', 'Cliente' => 'cliente', 'Pasajero' => 'pasajero', 'Conductor' => 'conductor', 'Vehículo' => 'vehiculo', 'Destino' => 'destino', 'Fecha' => 'fecha_servicio', 'Hora' => 'hora_servicio', 'Estado' => 'estado'],
+                    'columnas' => ['ID' => 'id', 'Cliente' => 'cliente', 'Nombre' => 'pasajero', 'Teléfono' => 'telefono', 'Origen' => 'origen', 'Destino' => 'destino_completo', 'Fecha y hora' => 'fecha_hora', 'Ticket' => 'ticket', 'Flete' => 'flete_legible', 'Conductor' => 'conductor', 'Vehículo' => 'vehiculo', 'Estado' => 'estado', 'Observaciones' => 'observaciones_corta'],
                 ],
                 [
                     'titulo' => 'Destinos',

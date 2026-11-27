@@ -27,11 +27,11 @@ if ($conexion->getAttribute(PDO::ATTR_DRIVER_NAME) !== 'mysql') {
 // Orden que respeta las claves foráneas.
 $tablas = [
     'clientes' => ['id', 'nombre', 'documento', 'correo', 'telefono'],
-    'conductores' => ['id', 'nombre', 'documento', 'licencia', 'telefono'],
+    'conductores' => ['id', 'nombre', 'documento', 'licencia', 'telefono', 'observaciones'],
     'destinos' => ['id', 'ciudad_origen', 'ciudad_destino', 'direccion_destino', 'tarifa'],
     'pasajeros' => ['id', 'nombre', 'documento', 'telefono', 'cliente_id'],
     'vehiculos' => ['id', 'placa', 'marca', 'modelo', 'capacidad', 'conductor_id'],
-    'servicios' => ['id', 'cliente_id', 'pasajero_id', 'conductor_id', 'vehiculo_id', 'destino_id', 'fecha_servicio', 'hora_servicio', 'estado'],
+    'servicios' => ['id', 'cliente_id', 'pasajero_id', 'conductor_id', 'vehiculo_id', 'destino_id', 'telefono_contacto', 'ciudad_origen', 'direccion_origen', 'ciudad_destino', 'direccion_destino', 'fecha_servicio', 'hora_servicio', 'ticket', 'flete', 'estado', 'observaciones'],
 ];
 
 $literal = static function ($valor) {

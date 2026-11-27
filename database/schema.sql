@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS conductores (
     documento VARCHAR(40) NOT NULL,
     licencia VARCHAR(50) NOT NULL,
     telefono VARCHAR(30) NOT NULL,
+    observaciones TEXT NULL,
     PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -62,9 +63,17 @@ CREATE TABLE IF NOT EXISTS servicios (
     conductor_id INT UNSIGNED NOT NULL,
     vehiculo_id INT UNSIGNED NOT NULL,
     destino_id INT UNSIGNED NOT NULL,
+    telefono_contacto VARCHAR(20) NULL,
+    ciudad_origen VARCHAR(100) NULL,
+    direccion_origen VARCHAR(150) NULL,
+    ciudad_destino VARCHAR(100) NULL,
+    direccion_destino VARCHAR(150) NULL,
     fecha_servicio DATE NOT NULL,
     hora_servicio TIME NOT NULL,
+    ticket VARCHAR(30) NULL,
+    flete DECIMAL(12, 2) NULL,
     estado VARCHAR(50) NOT NULL,
+    observaciones TEXT NULL,
     PRIMARY KEY (id),
     KEY idx_servicios_cliente_id (cliente_id),
     KEY idx_servicios_pasajero_id (pasajero_id),
