@@ -1,12 +1,11 @@
 <?php
 
 /**
- * Guarda las sesiones PHP en la tabla "sesiones" de MySQL/MariaDB.
+ * Guarda las sesiones PHP en la base de datos (tabla "sesiones").
  *
  * Necesario en plataformas serverless como Vercel, donde cada petición puede
  * ejecutarse en una instancia distinta y los archivos de sesión en disco se
  * pierden. Se activa con la variable de entorno SESSION_DRIVER=database.
- * Las fechas se guardan en UTC.
  */
 class SesionBaseDatos implements SessionHandlerInterface, SessionUpdateTimestampHandlerInterface
 {
@@ -16,17 +15,7 @@ class SesionBaseDatos implements SessionHandlerInterface, SessionUpdateTimestamp
     public function __construct(PDO $conexion, $tiempoVida = 7200)
     {
         $this->conexion = $conexion;
-        $this->tiempoVida = max(60, (int) $tiempoVida);
-    }
-
-    private function ahora()
-    {
-        return gmdate('Y-m-d H:i:s');
-    }
-
-    private function vencimiento()
-    {
-        return gmdate('Y-m-d H:i:s', time() + $this->tiempoVida);
+        $this->tiempoVida = (int) $tiempoVida;
     }
 
     public function open($path, $name): bool
@@ -44,9 +33,9 @@ class SesionBaseDatos implements SessionHandlerInterface, SessionUpdateTimestamp
     {
         try {
             $consulta = $this->conexion->prepare(
-                'SELECT datos FROM sesiones WHERE id = :id AND expira > :ahora'
+                'SELECT datos FROM sesiones WHERE id = :id AND expira > NOW()'
             );
-            $consulta->execute([':id' => $id, ':ahora' => $this->ahora()]);
+            $consulta->execute([':id' => $id]);
             $datos = $consulta->fetchColumn();
 
             return $datos === false ? '' : (string) $datos;
@@ -59,13 +48,17 @@ class SesionBaseDatos implements SessionHandlerInterface, SessionUpdateTimestamp
     public function write($id, $data): bool
     {
         try {
-            return $this->conexion->prepare(
-                'INSERT INTO sesiones (id, datos, expira) VALUES (:id, :datos, :expira)
-                 ON DUPLICATE KEY UPDATE datos = VALUES(datos), expira = VALUES(expira)'
-            )->execute([
+            $consulta = $this->conexion->prepare(
+                "INSERT INTO sesiones (id, datos, expira)
+                 VALUES (:id, :datos, NOW() + CAST(:vida AS integer) * INTERVAL '1 second')
+                 ON CONFLICT (id) DO UPDATE
+                 SET datos = EXCLUDED.datos, expira = EXCLUDED.expira"
+            );
+
+            return $consulta->execute([
                 ':id' => $id,
                 ':datos' => $data,
-                ':expira' => $this->vencimiento(),
+                ':vida' => $this->tiempoVida,
             ]);
         } catch (PDOException $e) {
             error_log('Error al guardar la sesión: ' . $e->getMessage());
@@ -88,8 +81,7 @@ class SesionBaseDatos implements SessionHandlerInterface, SessionUpdateTimestamp
     public function gc($maxLifetime)
     {
         try {
-            $consulta = $this->conexion->prepare('DELETE FROM sesiones WHERE expira <= :ahora');
-            $consulta->execute([':ahora' => $this->ahora()]);
+            $consulta = $this->conexion->query('DELETE FROM sesiones WHERE expira <= NOW()');
 
             return $consulta->rowCount();
         } catch (PDOException $e) {
@@ -102,9 +94,9 @@ class SesionBaseDatos implements SessionHandlerInterface, SessionUpdateTimestamp
     {
         try {
             $consulta = $this->conexion->prepare(
-                'SELECT 1 FROM sesiones WHERE id = :id AND expira > :ahora'
+                'SELECT 1 FROM sesiones WHERE id = :id AND expira > NOW()'
             );
-            $consulta->execute([':id' => $id, ':ahora' => $this->ahora()]);
+            $consulta->execute([':id' => $id]);
 
             return $consulta->fetchColumn() !== false;
         } catch (PDOException $e) {
@@ -115,8 +107,9 @@ class SesionBaseDatos implements SessionHandlerInterface, SessionUpdateTimestamp
     public function updateTimestamp($id, $data): bool
     {
         try {
-            return $this->conexion->prepare('UPDATE sesiones SET expira = :expira WHERE id = :id')
-                ->execute([':expira' => $this->vencimiento(), ':id' => $id]);
+            return $this->conexion->prepare(
+                "UPDATE sesiones SET expira = NOW() + CAST(:vida AS integer) * INTERVAL '1 second' WHERE id = :id"
+            )->execute([':id' => $id, ':vida' => $this->tiempoVida]);
         } catch (PDOException $e) {
             return false;
         }

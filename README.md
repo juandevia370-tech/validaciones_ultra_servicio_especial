@@ -1,13 +1,13 @@
 # Validaciones Ultra Servicio Especial
 
-Aplicación web en PHP para administrar clientes, conductores, pasajeros, servicios, destinos y vehículos. Usa MySQL/MariaDB (administrable con phpMyAdmin) y autenticación de usuarios propia en el backend PHP.
+Aplicación web en PHP para administrar clientes, conductores, pasajeros, servicios, destinos y vehículos. Usa MySQL/MariaDB para los datos y Supabase Auth para el inicio de sesión.
 
 ## Estructura del proyecto
 
 ```text
 validaciones_ultra_servicio_especial/
 ├── apps/                 # Controladores, modelos, vistas y autenticación
-├── config/               # Configuración de entorno y base de datos
+├── config/               # Configuración de conexión y Supabase
 ├── database/schema.sql   # Esquema inicial de la base de datos
 ├── public/               # Raíz web; index.php y recursos públicos
 ├── .env.example          # Ejemplo de variables de conexión
@@ -28,7 +28,7 @@ Lee las credenciales de variables de entorno o del archivo `.env`, que no se deb
 
 - PHP 7.4 o superior.
 - Apache con `mod_rewrite` y soporte para `.htaccess`.
-- Extensión PHP `pdo_mysql` (y `mbstring`).
+- Extensiones PHP `pdo_mysql` (local) o `pdo_pgsql` (producción) y `curl`.
 - MySQL o MariaDB compatible.
 
 ## Ejecucion con XAMPP
@@ -43,72 +43,86 @@ Lee las credenciales de variables de entorno o del archivo `.env`, que no se deb
 http://localhost/login
 ```
 
-Ejecuta en phpMyAdmin las migraciones de `database/migraciones/` (001, 002 y 003), crea tu primer usuario con `php database/crear_usuario.php` e inicia sesión con él.
+Inicia sesión con un usuario creado en Supabase Auth.
 
 ## Módulos del sistema
 
 Después de iniciar sesión se puede seleccionar y administrar cualquiera de las tablas existentes en la base `sistema_transporte`: clientes, conductores, pasajeros, servicios, destinos y vehículos. Cada módulo permite consultar, crear, editar y eliminar registros.
 
-## Autenticación de usuarios (propia, en el backend)
+## Autenticación (Supabase Auth desde el servidor)
 
-- Los usuarios viven en la tabla `usuarios` de la base del sistema. Las contraseñas se guardan **solo como hash bcrypt** (`password_hash` / `password_verify` de PHP); nadie puede leerlas.
-- `POST /login` valida correo y contraseña en PHP, regenera el ID de sesión y guarda en la sesión del servidor solo el ID del usuario. No se usa ningún servicio externo de autenticación.
-- Protecciones: bloqueo de la cuenta 15 minutos tras 5 contraseñas incorrectas, límite de intentos por sesión, tiempo de respuesta igual exista o no el correo, cierre automático tras 2 horas sin actividad (o 12 horas desde el inicio), cierre de las demás sesiones al cambiar la contraseña, token CSRF en todos los formularios, cookie `HttpOnly`/`SameSite=Lax` (`Secure` con HTTPS) y CSP estricta.
-- **Gestión de usuarios** desde el panel (tabla *Usuarios*): crear, editar, activar/desactivar, cambiar contraseña y eliminar. No puedes desactivarte ni eliminarte a ti mismo, y siempre debe quedar al menos un usuario activo.
-- **Crear usuarios por consola**:
-  - Local (XAMPP): `php database/crear_usuario.php`
-  - Producción: `php database/crear_usuario.php --sql` genera una instrucción SQL con la contraseña ya cifrada para ejecutarla en la pestaña SQL de phpMyAdmin.
+- El inicio de sesión se procesa **en el backend PHP**: el formulario envía correo y contraseña a `POST /login`, PHP los valida con Supabase (`/auth/v1/token`) y guarda los tokens **solo en la sesión del servidor**. El navegador nunca recibe tokens ni carga librerías de Supabase.
+- Cada petición privada verifica el token con Supabase y lo renueva con el *refresh token* cuando expira. `POST /auth/logout` revoca los tokens en Supabase y destruye la sesión.
+- Protecciones: token CSRF en todos los formularios, límite de 5 intentos fallidos cada 15 minutos por sesión, regeneración del ID de sesión al iniciar, cookie `HttpOnly`/`SameSite=Lax` (`Secure` con HTTPS), mensajes de error genéricos y política CSP sin scripts externos.
+- La URL del proyecto y la clave pública (`publishable`) se configuran en `config/supabase.php` o con las variables `SUPABASE_URL` y `SUPABASE_PUBLISHABLE_KEY`. Nunca uses la clave `service_role`.
+- Los usuarios se crean en Supabase > Authentication > Users (marcando *Auto Confirm User*).
 
-## Despliegue en producción (Vercel + MySQL)
+## Despliegue en producción (Vercel + Supabase)
 
-Arquitectura: **Vercel** (plan Hobby gratuito) ejecuta el PHP como funciones serverless con el runtime comunitario [`vercel-php`](https://github.com/vercel-community/php) (PHP 8.3) y sirve CSS, JS e imágenes como archivos estáticos. La base de datos es **MySQL/MariaDB** administrable con **phpMyAdmin** (por ejemplo, el plan gratuito de AlwaysData), accesible desde Internet. Como en serverless no hay disco persistente, las sesiones PHP se guardan en la tabla `sesiones` (`SESSION_DRIVER=database`). En local se usa XAMPP sin cambios.
+Arquitectura: **Vercel** (plan Hobby gratuito) ejecuta el PHP como funciones serverless con el runtime comunitario [`vercel-php`](https://github.com/vercel-community/php) (PHP 8.3) y sirve CSS/JS como archivos estáticos. **Supabase** aporta la base de datos PostgreSQL (esquema privado `transporte`), la autenticación y el almacenamiento de las sesiones PHP (tabla `transporte.sesiones`), porque en serverless no hay disco persistente. En local se sigue usando XAMPP/MariaDB sin cambios (`DB_DRIVER=mysql`).
 
 | Archivo | Función |
 |---|---|
-| `vercel.json` | Runtime PHP, región, rutas, archivos estáticos y cabeceras de seguridad |
-| `api/index.php`, `api/practica.php` | Puntos de entrada en Vercel (delegan en `public/`) |
-| `api/php.ini` | PHP de producción en Vercel |
+| `vercel.json` | Runtime PHP, reescrituras de rutas, archivos estáticos y cabeceras de seguridad |
+| `api/index.php` | Punto de entrada en Vercel; delega en `public/index.php` |
+| `api/practica.php` | Sirve la práctica `public/practicaJSON` |
+| `api/php.ini` | PHP de producción (sin mostrar errores, sesiones seguras) |
 | `package.json` | Fija Node.js 22.x, requerido por `vercel-php` |
-| `apps/middleware/SesionBaseDatos.php` | Sesiones PHP en MySQL |
-| `database/migraciones/*.mysql.sql` | Cambios de esquema (001 servicios/vehículos, 002 usuarios, 003 sesiones) |
-| `database/crear_usuario.php` | Crea usuarios por consola |
-| `public/.htaccess`, `.htaccess` | Reglas de Apache (XAMPP): enrutador, cabeceras y bloqueo de archivos internos |
+| `apps/middleware/SesionBaseDatos.php` | Sesiones PHP en PostgreSQL (`SESSION_DRIVER=database`) |
+| `database/schema.pgsql.sql` | Esquema PostgreSQL equivalente al de MySQL (PK, UNIQUE, FK, RLS) |
+| `database/exportar_a_supabase.php` | Genera el SQL de migración con los datos de MySQL local |
+| `Dockerfile`, `docker/`, `render.yaml` | Alternativa: despliegue en Render/Docker con Apache |
 
-### 1. Base de datos MySQL
+### 1. Migrar la base de datos a Supabase
 
-1. Crea una base MySQL/MariaDB con acceso remoto y su usuario (en AlwaysData: *Bases de datos > MySQL*).
-2. En su **phpMyAdmin**, selecciona la base y usa **Importar** con el volcado de tu base local (`mysqldump` o *Exportar* desde el phpMyAdmin de XAMPP). Debe incluir todas las tablas, también `usuarios` y `sesiones`.
-3. Crea el primer usuario: `php database/crear_usuario.php --sql` genera una instrucción con la contraseña ya cifrada; pégala en la pestaña **SQL** de phpMyAdmin.
+```bash
+php database/exportar_a_supabase.php
+```
 
-### 2. Variables de entorno en Vercel
+Genera `database/backups/migracion_supabase_<fecha>.sql` (excluido de Git porque contiene datos personales). Abre Supabase > **SQL Editor**, pega el contenido y ejecútalo. Todo corre en una transacción; al final muestra el conteo de registros por tabla.
+
+### 2. Crear el proyecto en Vercel
+
+1. En Vercel: **Add New > Project**, importa este repositorio de GitHub. *Framework Preset*: **Other** (el resto lo toma de `vercel.json`).
+2. En **Environment Variables** agrega:
 
 | Variable | Valor |
 |---|---|
 | `APP_ENV` | `production` |
-| `DB_HOST` | servidor MySQL (AlwaysData: `mysql-<cuenta>.alwaysdata.net`) |
-| `DB_PORT` | `3306` |
-| `DB_NAME` | nombre de la base |
-| `DB_USER` | usuario de la base |
-| `DB_PASSWORD` | contraseña de la base (márcala como *Secret*) |
-| `DB_SSL` | `true` (conexión cifrada) |
+| `DB_DRIVER` | `pgsql` |
+| `DB_HOST` | Supabase > Connect > **Session pooler** (`aws-…pooler.supabase.com`) |
+| `DB_PORT` | `5432` |
+| `DB_NAME` | `postgres` |
+| `DB_USER` | `postgres.<id_del_proyecto>` |
+| `DB_PASSWORD` | contraseña de la base de datos (secreta) |
+| `DB_SCHEMA` | `transporte` |
+| `DB_SSLMODE` | `require` |
 | `SESSION_DRIVER` | `database` |
 
-Después de cambiar variables: **Deployments > ⋯ > Redeploy**. Comprueba `https://<proyecto>.vercel.app/health` → `{"status":"ok","database":"ok"}`.
+3. **Deploy**. Luego `https://<proyecto>.vercel.app/health` debe responder `{"status":"ok","database":"ok"}`.
+4. Recomendado: en Settings > Functions, elige la región de Vercel más cercana a la región de Supabase.
+
+### 3. Ajustar Supabase Auth
+
+Supabase > Authentication > **URL Configuration**: define la URL de Vercel como *Site URL* y agrégala a *Redirect URLs*.
 
 ### Actualizar el sistema
 
-Cada `git push` a `main` despliega automáticamente en Vercel. Los cambios de esquema se ejecutan en phpMyAdmin (local y producción) con los archivos de `database/migraciones/`.
+Cada `git push` a la rama de producción del proyecto despliega automáticamente; las demás ramas generan *previews*. Los cambios de esquema se aplican con el SQL Editor de Supabase.
 
 ### Variables de entorno
 
 | Variable | Descripción |
 |---|---|
 | `APP_ENV` | `local` o `production` |
-| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | Conexión MySQL |
-| `DB_SSL`, `DB_SSL_CA` | Conexión cifrada hacia un MySQL remoto |
-| `SESSION_DRIVER` | `files` (XAMPP) o `database` (Vercel) |
+| `DB_DRIVER` | `mysql` (XAMPP) o `pgsql` (Supabase) |
+| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | Conexión a la base de datos |
+| `DB_SCHEMA` | Esquema de PostgreSQL (`transporte`) |
+| `DB_SSLMODE` | TLS hacia la base de datos (`require` en producción) |
+| `SESSION_DRIVER` | `files` (XAMPP/Docker) o `database` (Vercel) |
+| `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` | Opcionales; sobrescriben `config/supabase.php` |
 
-Nunca subas `.env` ni contraseñas al repositorio.
+Nunca uses la clave `service_role` de Supabase en esta aplicación ni la subas al repositorio.
 
 ## Comprobacion por consola
 

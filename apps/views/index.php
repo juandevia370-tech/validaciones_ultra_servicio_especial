@@ -2,12 +2,9 @@
 $escape = static function ($value): string {
     return htmlspecialchars((string) ($value ?? ''), ENT_QUOTES, 'UTF-8');
 };
-$totalRegistros = array_sum(array_map(static function ($tabla) {
-    return count($tabla['registros']);
-}, $tablas));
-$emailUsuario = $authUser['correo'] ?? ($authUser['email'] ?? '');
-$nombreUsuario = $authUser['nombre'] ?? 'Usuario';
-$usuarioActualId = (int) ($authUser['id'] ?? 0);
+$totalRegistros = count($clientes) + count($conductores) + count($pasajeros)
+    + count($servicios) + count($destinos) + count($vehiculos);
+$emailUsuario = $authUser['email'] ?? 'Usuario autenticado';
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -23,7 +20,7 @@ $usuarioActualId = (int) ($authUser['id'] ?? 0);
     <div class="app-shell">
         <aside class="app-sidebar">
             <a class="app-brand" href="<?= $escape(app_url('/')) ?>">
-                <img class="app-brand-logo" src="<?= $escape(app_url('/img/logo-ultra-3d-sm.webp')) ?>" alt="ULTRA Servicio Especial" width="300" height="262">
+                <img class="app-brand-logo" src="<?= $escape(app_url('/img/logo-ultra-blanco.png')) ?>" alt="ULTRA Servicio Especial" width="120" height="113">
                 <span class="app-brand-text">Sistema de transporte</span>
             </a>
 
@@ -44,7 +41,6 @@ $usuarioActualId = (int) ($authUser['id'] ?? 0);
             <div class="sidebar-spacer"></div>
             <div class="sidebar-user">
                 <p class="sidebar-user-label">Sesión iniciada</p>
-                <p class="sidebar-user-name"><?= $escape($nombreUsuario) ?></p>
                 <p class="sidebar-user-email"><?= $escape($emailUsuario) ?></p>
             </div>
         </aside>
@@ -66,13 +62,13 @@ $usuarioActualId = (int) ($authUser['id'] ?? 0);
                     <div>
                         <p>Panel de control</p>
                         <h2 id="welcome-title">Gestiona tu operación desde un solo lugar</h2>
-                        <span><?= $totalRegistros ?> registros en las <?= count($tablas) ?> tablas del sistema.</span>
+                        <span><?= $totalRegistros ?> registros en las seis tablas del sistema.</span>
                     </div>
                     <a class="button button-primary" href="<?= $escape(app_url('/servicio/crear')) ?>">+ Nuevo servicio</a>
                 </section>
 
                 <?php if ($mensaje !== ''): ?>
-                    <p class="auth-message" role="status" data-type="<?= !empty($mensajeEsError) ? 'error' : 'success' ?>"><?= $escape($mensaje) ?></p>
+                    <p class="auth-message" role="status" data-type="<?= ($_GET['msg'] ?? '') === 'error' ? 'error' : 'success' ?>"><?= $escape($mensaje) ?></p>
                 <?php endif; ?>
 
                 <section aria-labelledby="select-table-title">
@@ -122,31 +118,16 @@ $usuarioActualId = (int) ($authUser['id'] ?? 0);
                                         <?php foreach ($tabla['registros'] as $registro): ?>
                                             <tr>
                                                 <?php foreach ($tabla['columnas'] as $campo): ?>
-                                                    <?php if ($campo === 'estado'): ?>
-                                                        <?php $estadoClase = strtolower(str_replace(' ', '-', (string) ($registro['estado'] ?? ''))); ?>
-                                                        <td><span class="status-badge status-<?= $escape($estadoClase) ?>"><?= $escape($registro['estado'] ?? '') ?></span></td>
-                                                    <?php elseif ($campo === 'placa'): ?>
-                                                        <td><span class="plate"><?= $escape($registro['placa'] ?? '') ?></span></td>
-                                                    <?php else: ?>
-                                                        <td class="<?= $campo === 'id' ? 'record-id' : (in_array($campo, ['salida', 'llegada', 'fecha_servicio', 'hora_servicio'], true) ? 'cell-nowrap' : '') ?>"><?= $escape($registro[$campo] ?? '') ?></td>
-                                                    <?php endif; ?>
+                                                    <td class="<?= $campo === 'id' ? 'record-id' : '' ?>"><?= $escape($registro[$campo] ?? '') ?></td>
                                                 <?php endforeach; ?>
                                                 <td>
                                                     <div class="row-actions">
-                                                        <?php if ($tabla['clave'] === 'servicios' && ($registro['estado'] ?? '') === Servicio::ESTADO_FINALIZADO): ?>
-                                                            <span class="locked-label" title="Los servicios finalizados no se pueden editar">Bloqueado</span>
-                                                        <?php else: ?>
-                                                            <a class="button" href="<?= $escape(app_url('/' . $tabla['ruta'] . '/editar?id=' . (int) $registro['id'])) ?>">Editar</a>
-                                                        <?php endif; ?>
-                                                        <?php if ($tabla['clave'] === 'usuarios' && (int) $registro['id'] === $usuarioActualId): ?>
-                                                            <span class="locked-label you-label" title="Es tu usuario">Tú</span>
-                                                        <?php else: ?>
+                                                        <a class="button" href="<?= $escape(app_url('/' . $tabla['ruta'] . '/editar?id=' . (int) $registro['id'])) ?>">Editar</a>
                                                         <form class="delete-form" method="post" action="<?= $escape(app_url('/' . $tabla['ruta'] . '/eliminar')) ?>" data-confirm="¿Confirmas que quieres eliminar este registro?">
                                                             <?= csrf_field() ?>
                                                             <input type="hidden" name="id" value="<?= (int) $registro['id'] ?>">
                                                             <button class="delete-button" type="submit">Eliminar</button>
                                                         </form>
-                                                        <?php endif; ?>
                                                     </div>
                                                 </td>
                                             </tr>

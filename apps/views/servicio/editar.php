@@ -41,6 +41,16 @@ $e = static function ($valor): string {
         <?php endforeach; ?>
     </select>
 
+    <label for="servicio_vehiculo_id">Vehículo</label>
+    <select id="servicio_vehiculo_id" name="vehiculo_id" required>
+        <option value="">Selecciona un vehículo</option>
+        <?php foreach ($vehiculos as $vehiculo): ?>
+            <option value="<?= (int) $vehiculo['id'] ?>" <?= (int) $vehiculo['id'] === (int) $servicio['vehiculo_id'] ? 'selected' : '' ?>>
+                <?= $e($vehiculo['placa'] . ' - ' . $vehiculo['marca'] . ' ' . $vehiculo['modelo']) ?>
+            </option>
+        <?php endforeach; ?>
+    </select>
+
     <label for="servicio_destino_id">Destino</label>
     <select id="servicio_destino_id" name="destino_id" required>
         <option value="">Selecciona un destino</option>
@@ -51,10 +61,16 @@ $e = static function ($valor): string {
         <?php endforeach; ?>
     </select>
 
-    <?php require __DIR__ . '/_campos.php'; ?>
+    <label for="servicio_fecha">Fecha del servicio</label>
+    <input type="date" id="servicio_fecha" name="fecha_servicio" value="<?= $e($servicio['fecha_servicio']) ?>" required>
+
+    <label for="servicio_hora">Hora del servicio</label>
+    <input type="time" id="servicio_hora" name="hora_servicio" value="<?= $e($servicio['hora_servicio']) ?>" required>
+
+    <label for="servicio_estado">Estado</label>
+    <input type="text" id="servicio_estado" name="estado" value="<?= $e($servicio['estado']) ?>" required>
 
     <button type="submit">Guardar cambios</button>
     <a href="<?= htmlspecialchars(app_url('/'), ENT_QUOTES, 'UTF-8') ?>">Cancelar</a>
 </form>
 </main>
-<script src="<?= htmlspecialchars(app_url('/js/app.js'), ENT_QUOTES, 'UTF-8') ?>" defer></script>

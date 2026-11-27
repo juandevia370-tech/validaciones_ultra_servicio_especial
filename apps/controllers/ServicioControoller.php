@@ -44,27 +44,21 @@ class ServicioController
         require __DIR__ . '/../views/servicio/crear.php';
     }
 
-    private function datosFormulario()
-    {
-        $campos = [
-            'cliente_id', 'pasajero_id', 'conductor_id', 'vehiculo_id', 'destino_id',
-            'fecha_servicio', 'hora_servicio', 'fecha_llegada', 'hora_llegada', 'estado',
-        ];
-        $datos = [];
-        foreach ($campos as $campo) {
-            $datos[$campo] = is_string($_POST[$campo] ?? null) ? $_POST[$campo] : '';
-        }
-
-        return $datos;
-    }
-
     public function guardar()
     {
         try {
-            return $this->servicioModel->guardar($this->datosFormulario());
+            return $this->servicioModel->guardar(
+                $_POST['cliente_id'] ?? '',
+                $_POST['pasajero_id'] ?? '',
+                $_POST['conductor_id'] ?? '',
+                $_POST['vehiculo_id'] ?? '',
+                $_POST['destino_id'] ?? '',
+                $_POST['fecha_servicio'] ?? '',
+                $_POST['hora_servicio'] ?? '',
+                $_POST['estado'] ?? ''
+            );
         } catch (InvalidArgumentException $e) {
             error_log('Datos de servicio no válidos: ' . $e->getMessage());
-            $_SESSION['flash_error'] = $e->getMessage();
             return false;
         }
     }
@@ -97,12 +91,6 @@ class ServicioController
             exit('Servicio no encontrado.');
         }
 
-        // Un servicio finalizado queda bloqueado para edición.
-        if (($servicio['estado'] ?? '') === Servicio::ESTADO_FINALIZADO) {
-            header('Location: ' . app_url('/?tabla=servicios&msg=bloqueado'));
-            exit;
-        }
-
         $catalogos = $this->cargarCatalogos();
         $clientes = $catalogos['clientes'];
         $pasajeros = $catalogos['pasajeros'];
@@ -116,25 +104,24 @@ class ServicioController
     public function actualizar()
     {
         $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
-        if (!$id || $id < 1) {
-            header('Location: ' . app_url('/?tabla=servicios&msg=error'));
-            exit;
-        }
-
-        if ($this->servicioModel->estaFinalizado($id)) {
-            header('Location: ' . app_url('/?tabla=servicios&msg=bloqueado'));
-            exit;
-        }
-
         try {
-            $ok = $this->servicioModel->actualizar($id, $this->datosFormulario());
+            $ok = $id && $this->servicioModel->actualizar(
+                $id,
+                $_POST['cliente_id'] ?? '',
+                $_POST['pasajero_id'] ?? '',
+                $_POST['conductor_id'] ?? '',
+                $_POST['vehiculo_id'] ?? '',
+                $_POST['destino_id'] ?? '',
+                $_POST['fecha_servicio'] ?? '',
+                $_POST['hora_servicio'] ?? '',
+                $_POST['estado'] ?? ''
+            );
         } catch (InvalidArgumentException $e) {
             error_log('Datos de servicio no válidos: ' . $e->getMessage());
-            $_SESSION['flash_error'] = $e->getMessage();
             $ok = false;
         }
 
-        header('Location: ' . app_url('/?tabla=servicios&msg=' . ($ok ? 'editado' : 'error')));
+        header('Location: ' . app_url('/?msg=' . ($ok ? 'editado' : 'error')));
         exit;
     }
 

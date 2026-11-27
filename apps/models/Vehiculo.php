@@ -2,8 +2,6 @@
 
 class Vehiculo
 {
-    public const TIPOS = ['Automóvil', 'Camioneta', 'Van', 'Buseta', 'Microbús', 'Bus'];
-
     private $conexion;
 
     public function __construct($conexion)
@@ -11,10 +9,9 @@ class Vehiculo
         $this->conexion = $conexion;
     }
 
-    public function guardar($placa, $tipo, $marca, $modelo, $capacidad, $conductorId)
+    public function guardar($placa, $marca, $modelo, $capacidad, $conductorId)
     {
-        $placa = strtoupper(trim($placa));
-        $tipo = trim($tipo);
+        $placa = trim($placa);
         $marca = trim($marca);
         $modelo = trim($modelo);
         $capacidad = filter_var($capacidad, FILTER_VALIDATE_INT);
@@ -22,7 +19,6 @@ class Vehiculo
 
         if (
             $placa === '' || $marca === '' || $modelo === ''
-            || !in_array($tipo, self::TIPOS, true)
             || $capacidad === false || $capacidad < 1
             || $conductorId === false || $conductorId < 1
         ) {
@@ -31,13 +27,12 @@ class Vehiculo
 
         try {
             $consulta = $this->conexion->prepare(
-                'INSERT INTO vehiculos (placa, tipo, marca, modelo, capacidad, conductor_id)
-                 VALUES (:placa, :tipo, :marca, :modelo, :capacidad, :conductor_id)'
+                'INSERT INTO vehiculos (placa, marca, modelo, capacidad, conductor_id)
+                 VALUES (:placa, :marca, :modelo, :capacidad, :conductor_id)'
             );
 
             return $consulta->execute([
                 ':placa' => $placa,
-                ':tipo' => $tipo,
                 ':marca' => $marca,
                 ':modelo' => $modelo,
                 ':capacidad' => $capacidad,
@@ -49,10 +44,9 @@ class Vehiculo
         }
     }
 
-    public function actualizar($id, $placa, $tipo, $marca, $modelo, $capacidad, $conductorId)
+    public function actualizar($id, $placa, $marca, $modelo, $capacidad, $conductorId)
     {
-        $placa = strtoupper(trim($placa));
-        $tipo = trim($tipo);
+        $placa = trim($placa);
         $marca = trim($marca);
         $modelo = trim($modelo);
         $capacidad = filter_var($capacidad, FILTER_VALIDATE_INT);
@@ -60,7 +54,6 @@ class Vehiculo
 
         if (
             $placa === '' || $marca === '' || $modelo === ''
-            || !in_array($tipo, self::TIPOS, true)
             || $capacidad === false || $capacidad < 1
             || $conductorId === false || $conductorId < 1
         ) {
@@ -70,14 +63,13 @@ class Vehiculo
         try {
             $consulta = $this->conexion->prepare(
                 'UPDATE vehiculos
-                 SET placa = :placa, tipo = :tipo, marca = :marca, modelo = :modelo,
+                 SET placa = :placa, marca = :marca, modelo = :modelo,
                      capacidad = :capacidad, conductor_id = :conductor_id
                  WHERE id = :id'
             );
 
             return $consulta->execute([
                 ':placa' => $placa,
-                ':tipo' => $tipo,
                 ':marca' => $marca,
                 ':modelo' => $modelo,
                 ':capacidad' => $capacidad,
