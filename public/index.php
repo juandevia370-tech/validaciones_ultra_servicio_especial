@@ -88,9 +88,10 @@ if (app_env('SESSION_DRIVER', 'files') === 'database') {
 }
 session_start();
 
-require_once __DIR__ . '/../apps/middleware/SupabaseAuth.php';
+require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../apps/middleware/Csrf.php';
-$supabaseAuth = new SupabaseAuth(require __DIR__ . '/../config/supabase.php');
+require_once __DIR__ . '/../apps/middleware/Autenticacion.php';
+$autenticacion = new Autenticacion(new Usuario($conexion));
 
 $destroySession = static function () {
     $_SESSION = [];
@@ -129,12 +130,9 @@ if ($method === 'POST' && !csrf_valid()) {
 switch ($uri) {
     case '/login':
         if ($method === 'GET') {
-            if (!empty($_SESSION['supabase_access_token'])) {
-                $result = $supabaseAuth->verify($_SESSION['supabase_access_token']);
-                if ($result['status'] === 200) {
-                    header('Location: ' . app_url('/'));
-                    exit;
-                }
+            if ($autenticacion->usuarioActual() !== null) {
+                header('Location: ' . app_url('/'));
+                exit;
             }
 
             $loginError = is_string($_SESSION['login_error'] ?? null) ? $_SESSION['login_error'] : '';
@@ -150,8 +148,8 @@ switch ($uri) {
             $email = strtolower(trim((string) ($_POST['correo'] ?? '')));
             $password = (string) ($_POST['contrasena'] ?? '');
 
-            // Límite de intentos: 5 fallidos cada 15 minutos por sesión
-            // (Supabase aplica además sus propios límites).
+            // Límite por sesión: 5 intentos fallidos cada 15 minutos. Además,
+            // cada cuenta se bloquea 15 minutos tras 5 fallos (ver Autenticacion).
             $now = time();
             $attempts = array_values(array_filter(
                 (array) ($_SESSION['login_attempts'] ?? []),
@@ -166,45 +164,33 @@ switch ($uri) {
             if (
                 strlen($email) > 254
                 || filter_var($email, FILTER_VALIDATE_EMAIL) === false
-                || strlen($password) < 6
+                || $password === ''
                 || strlen($password) > 72
             ) {
                 $_SESSION['login_attempts'] = array_merge($attempts, [$now]);
                 $redirectToLogin('Correo o contraseña incorrectos.', $email);
             }
 
-            $result = $supabaseAuth->signInWithPassword($email, $password);
+            try {
+                $result = $autenticacion->iniciarSesion($email, $password);
+            } catch (PDOException $e) {
+                error_log('Error en el inicio de sesión: ' . $e->getMessage());
+                $redirectToLogin('No fue posible iniciar sesión en este momento. Intenta de nuevo.', $email);
+            }
             unset($password);
 
-            if (
-                $result['status'] === 200
-                && !empty($result['data']['access_token'])
-                && !empty($result['data']['user']['id'])
-            ) {
-                session_regenerate_id(true);
+            if ($result['ok']) {
                 unset($_SESSION['login_attempts'], $_SESSION['login_error'], $_SESSION['login_email']);
-                $_SESSION['supabase_access_token'] = $result['data']['access_token'];
-                $_SESSION['supabase_refresh_token'] = (string) ($result['data']['refresh_token'] ?? '');
-                $_SESSION['supabase_user'] = $result['data']['user'];
-                csrf_regenerate();
                 header('Location: ' . app_url('/'), true, 303);
                 exit;
             }
 
             $_SESSION['login_attempts'] = array_merge($attempts, [$now]);
-            $errorCode = is_array($result['data'])
-                ? (string) ($result['data']['error_code'] ?? $result['data']['code'] ?? '')
-                : '';
-            error_log('Inicio de sesión rechazado (HTTP ' . $result['status'] . ($errorCode !== '' ? ', ' . $errorCode : '') . ').');
-
-            if ($result['status'] === 503) {
-                $redirectToLogin('El servicio de autenticación no está disponible. Intenta de nuevo en unos minutos.', $email);
+            if ($result['motivo'] === 'bloqueado') {
+                $redirectToLogin('Por seguridad, la cuenta está bloqueada temporalmente. Espera 15 minutos e inténtalo de nuevo.', $email);
             }
-            if ($result['status'] === 429) {
-                $redirectToLogin('Demasiados intentos. Espera unos minutos e inténtalo de nuevo.', $email);
-            }
-            if ($errorCode === 'email_not_confirmed') {
-                $redirectToLogin('Tu correo aún no está confirmado. Contacta al administrador.', $email);
+            if ($result['motivo'] === 'inactivo') {
+                $redirectToLogin('Tu usuario está desactivado. Contacta al administrador.', $email);
             }
             $redirectToLogin('Correo o contraseña incorrectos.', $email);
         }
@@ -218,51 +204,23 @@ switch ($uri) {
             exit('Método no permitido.');
         }
 
-        if (!empty($_SESSION['supabase_access_token'])) {
-            // Revoca los refresh tokens en Supabase; si falla, igual se cierra la sesión local.
-            $supabaseAuth->signOut($_SESSION['supabase_access_token']);
-        }
         $destroySession();
         header('Location: ' . app_url('/login'), true, 303);
         exit;
 }
 
 // A partir de aquí todas las rutas son privadas.
-$accessToken = $_SESSION['supabase_access_token'] ?? '';
-$authResult = $accessToken !== ''
-    ? $supabaseAuth->verify($accessToken)
-    : ['status' => 401, 'data' => null];
-
-if ($authResult['status'] === 401 && !empty($_SESSION['supabase_refresh_token'])) {
-    $refreshResult = $supabaseAuth->refresh($_SESSION['supabase_refresh_token']);
-    if ($refreshResult['status'] === 200 && !empty($refreshResult['data']['access_token'])) {
-        $authResult = $supabaseAuth->verify($refreshResult['data']['access_token']);
-        if ($authResult['status'] === 200) {
-            $_SESSION['supabase_access_token'] = $refreshResult['data']['access_token'];
-            $_SESSION['supabase_refresh_token'] = $refreshResult['data']['refresh_token'] ?? $_SESSION['supabase_refresh_token'];
-        }
-    } elseif ($refreshResult['status'] === 503) {
-        $authResult = $refreshResult;
-    }
-}
-
-if ($authResult['status'] === 503) {
-    http_response_code(503);
-    exit('No se pudo conectar con el servicio de autenticación. Intenta de nuevo.');
-}
-
-if ($authResult['status'] !== 200 || empty($authResult['data']['id'])) {
+$authUser = $autenticacion->usuarioActual();
+if ($authUser === null) {
     $destroySession();
     header('Location: ' . app_url('/login'));
     exit;
 }
 
-$_SESSION['supabase_user'] = $authResult['data'];
-$authUser = $authResult['data'];
-
 // Las páginas privadas no se guardan en caché (evita verlas con "Atrás" tras cerrar sesión).
 header('Cache-Control: no-store, private');
 
+require_once __DIR__ . '/../apps/controllers/UsuarioController.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../apps/controllers/ClienteController.php';
 require_once __DIR__ . '/../apps/controllers/ConductorController.php';
@@ -280,6 +238,7 @@ switch ($uri) {
             $servicios = (new Servicio($conexion))->obtenerTodos();
             $destinos = (new Destino($conexion))->obtenerTodos();
             $vehiculos = (new Vehiculo($conexion))->obtenerTodos();
+            $usuarios = (new Usuario($conexion))->obtenerTodos();
 
             $mensajes = [
                 'creado' => 'Registro creado correctamente.',
@@ -303,6 +262,7 @@ switch ($uri) {
                 'servicios' => 'servicio',
                 'destinos' => 'destino',
                 'vehiculos' => 'vehiculo',
+                'usuarios' => 'usuario',
             ];
 
             $tablas = [
@@ -347,6 +307,13 @@ switch ($uri) {
                     'clave' => 'vehiculos',
                     'registros' => $vehiculos,
                     'columnas' => ['ID' => 'id', 'Placa' => 'placa', 'Tipo' => 'tipo', 'Marca' => 'marca', 'Modelo' => 'modelo', 'Capacidad' => 'capacidad', 'Conductor' => 'conductor'],
+                ],
+                [
+                    'titulo' => 'Usuarios',
+                    'ruta' => 'usuario',
+                    'clave' => 'usuarios',
+                    'registros' => $usuarios,
+                    'columnas' => ['ID' => 'id', 'Nombre' => 'nombre', 'Correo' => 'correo', 'Estado' => 'estado', 'Último acceso' => 'ultimo_acceso_legible'],
                 ],
             ];
 
@@ -510,6 +477,34 @@ switch ($uri) {
         }
         (new VehiculoController($conexion))->eliminar();
         exit;
+
+    case '/usuario/editar':
+        if ($method !== 'GET') {
+            http_response_code(405);
+            exit('Método no permitido.');
+        }
+        (new UsuarioController($conexion, $authUser['id']))->editar();
+        exit;
+
+    case '/usuario/actualizar':
+        if ($method !== 'POST') {
+            http_response_code(405);
+            exit('Método no permitido.');
+        }
+        (new UsuarioController($conexion, $authUser['id']))->actualizar();
+        exit;
+
+    case '/usuario/eliminar':
+        if ($method !== 'POST') {
+            http_response_code(405);
+            exit('Método no permitido.');
+        }
+        (new UsuarioController($conexion, $authUser['id']))->eliminar();
+        exit;
+
+    case '/usuario/crear':
+        $controladorClase = UsuarioController::class;
+        break;
 
     case '/cliente/crear':
         $controladorClase = ClienteController::class;

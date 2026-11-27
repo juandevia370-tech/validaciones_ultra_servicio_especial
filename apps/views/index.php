@@ -2,9 +2,12 @@
 $escape = static function ($value): string {
     return htmlspecialchars((string) ($value ?? ''), ENT_QUOTES, 'UTF-8');
 };
-$totalRegistros = count($clientes) + count($conductores) + count($pasajeros)
-    + count($servicios) + count($destinos) + count($vehiculos);
-$emailUsuario = $authUser['email'] ?? 'Usuario autenticado';
+$totalRegistros = array_sum(array_map(static function ($tabla) {
+    return count($tabla['registros']);
+}, $tablas));
+$emailUsuario = $authUser['correo'] ?? ($authUser['email'] ?? '');
+$nombreUsuario = $authUser['nombre'] ?? 'Usuario';
+$usuarioActualId = (int) ($authUser['id'] ?? 0);
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -41,6 +44,7 @@ $emailUsuario = $authUser['email'] ?? 'Usuario autenticado';
             <div class="sidebar-spacer"></div>
             <div class="sidebar-user">
                 <p class="sidebar-user-label">Sesión iniciada</p>
+                <p class="sidebar-user-name"><?= $escape($nombreUsuario) ?></p>
                 <p class="sidebar-user-email"><?= $escape($emailUsuario) ?></p>
             </div>
         </aside>
@@ -62,7 +66,7 @@ $emailUsuario = $authUser['email'] ?? 'Usuario autenticado';
                     <div>
                         <p>Panel de control</p>
                         <h2 id="welcome-title">Gestiona tu operación desde un solo lugar</h2>
-                        <span><?= $totalRegistros ?> registros en las seis tablas del sistema.</span>
+                        <span><?= $totalRegistros ?> registros en las <?= count($tablas) ?> tablas del sistema.</span>
                     </div>
                     <a class="button button-primary" href="<?= $escape(app_url('/servicio/crear')) ?>">+ Nuevo servicio</a>
                 </section>
@@ -134,11 +138,15 @@ $emailUsuario = $authUser['email'] ?? 'Usuario autenticado';
                                                         <?php else: ?>
                                                             <a class="button" href="<?= $escape(app_url('/' . $tabla['ruta'] . '/editar?id=' . (int) $registro['id'])) ?>">Editar</a>
                                                         <?php endif; ?>
+                                                        <?php if ($tabla['clave'] === 'usuarios' && (int) $registro['id'] === $usuarioActualId): ?>
+                                                            <span class="locked-label you-label" title="Es tu usuario">Tú</span>
+                                                        <?php else: ?>
                                                         <form class="delete-form" method="post" action="<?= $escape(app_url('/' . $tabla['ruta'] . '/eliminar')) ?>" data-confirm="¿Confirmas que quieres eliminar este registro?">
                                                             <?= csrf_field() ?>
                                                             <input type="hidden" name="id" value="<?= (int) $registro['id'] ?>">
                                                             <button class="delete-button" type="submit">Eliminar</button>
                                                         </form>
+                                                        <?php endif; ?>
                                                     </div>
                                                 </td>
                                             </tr>

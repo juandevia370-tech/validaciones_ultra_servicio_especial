@@ -1078,3 +1078,53 @@ button:disabled {
         font-size: 19px;
     }
 }
+
+/* ----- Usuarios ----- */
+.status-activo {
+    border-color: var(--success-border);
+    background: var(--success-bg);
+    color: var(--success);
+}
+
+.status-inactivo {
+    border-color: var(--silver-300);
+    background: var(--silver-100);
+    color: var(--silver-700);
+}
+
+.you-label::before {
+    content: "👤";
+}
+
+.sidebar-user-name {
+    overflow: hidden;
+    margin: 0 0 2px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sidebar-user-name + .sidebar-user-email {
+    color: var(--brand-200);
+}
+
+.crud-form .check-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--brand-50);
+    cursor: pointer;
+}
+
+.crud-form .check-row input {
+    width: 18px;
+    min-height: 18px;
+    height: 18px;
+    margin: 0;
+    accent-color: var(--brand-600);
+}

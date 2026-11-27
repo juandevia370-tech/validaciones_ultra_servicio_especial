@@ -53,6 +53,7 @@ try {
         $conexion->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         // Las tablas viven en un esquema privado que la API pública de Supabase no expone.
         $conexion->exec('SET search_path TO ' . $schema);
+        $conexion->exec("SET TIME ZONE 'UTC'");
     } else {
         $conexion = new PDO(
             "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4",
@@ -60,6 +61,7 @@ try {
             $password
         );
         $conexion->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $conexion->exec("SET time_zone = '+00:00'");
     }
 } catch (PDOException $e) {
     error_log('Error de conexión a la base de datos: ' . $e->getMessage());
