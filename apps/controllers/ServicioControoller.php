@@ -49,7 +49,7 @@ class ServicioController
         $campos = [
             'cliente_id', 'pasajero_id', 'conductor_id', 'vehiculo_id', 'destino_id',
             'telefono_contacto', 'ciudad_origen', 'direccion_origen', 'ciudad_destino',
-            'direccion_destino', 'fecha_servicio', 'hora_servicio', 'ticket', 'flete',
+            'direccion_destino', 'fecha_servicio', 'hora_servicio', 'hora_llegada', 'ticket', 'flete',
             'estado', 'observaciones',
         ];
         $datos = [];

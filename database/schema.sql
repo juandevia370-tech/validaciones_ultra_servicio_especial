@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS pasajeros (
 CREATE TABLE IF NOT EXISTS vehiculos (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     placa VARCHAR(20) NOT NULL,
+    tipo VARCHAR(30) NOT NULL,
     marca VARCHAR(80) NOT NULL,
     modelo VARCHAR(80) NOT NULL,
     capacidad INT UNSIGNED NOT NULL,
@@ -70,6 +71,7 @@ CREATE TABLE IF NOT EXISTS servicios (
     direccion_destino VARCHAR(150) NULL,
     fecha_servicio DATE NOT NULL,
     hora_servicio TIME NOT NULL,
+    hora_llegada TIME NULL,
     ticket VARCHAR(30) NULL,
     flete DECIMAL(12, 2) NULL,
     estado VARCHAR(50) NOT NULL,

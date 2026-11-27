@@ -152,11 +152,17 @@ class Servicio
         if (!$fechaValida || $fechaValida->format('Y-m-d') !== $fecha) {
             throw new InvalidArgumentException('La fecha del servicio no es válida.');
         }
-        if (!preg_match('/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/', $hora)) {
-            throw new InvalidArgumentException('La hora del servicio no es válida.');
+        $horaLlegada = trim((string) ($datos['hora_llegada'] ?? ''));
+        $patronHora = '/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/';
+        if (!preg_match($patronHora, $hora)) {
+            throw new InvalidArgumentException('La hora de salida no es válida.');
+        }
+        if (!preg_match($patronHora, $horaLlegada)) {
+            throw new InvalidArgumentException('Completa una hora de llegada válida.');
         }
         $parametros[':fecha_servicio'] = $fecha;
         $parametros[':hora_servicio'] = strlen($hora) === 5 ? $hora . ':00' : $hora;
+        $parametros[':hora_llegada'] = strlen($horaLlegada) === 5 ? $horaLlegada . ':00' : $horaLlegada;
 
         $flete = str_replace([' ', '$'], '', (string) ($datos['flete'] ?? ''));
         $flete = filter_var($flete, FILTER_VALIDATE_FLOAT);
@@ -176,12 +182,12 @@ class Servicio
             $sql = 'INSERT INTO servicios
                         (cliente_id, pasajero_id, conductor_id, vehiculo_id, destino_id,
                          telefono_contacto, ciudad_origen, direccion_origen, ciudad_destino,
-                         direccion_destino, fecha_servicio, hora_servicio, ticket, flete,
+                         direccion_destino, fecha_servicio, hora_servicio, hora_llegada, ticket, flete,
                          estado, observaciones)
                     VALUES
                         (:cliente_id, :pasajero_id, :conductor_id, :vehiculo_id, :destino_id,
                          :telefono_contacto, :ciudad_origen, :direccion_origen, :ciudad_destino,
-                         :direccion_destino, :fecha_servicio, :hora_servicio, :ticket, :flete,
+                         :direccion_destino, :fecha_servicio, :hora_servicio, :hora_llegada, :ticket, :flete,
                          :estado, :observaciones)';
 
             return $this->conexion->prepare($sql)->execute($parametros);
@@ -204,6 +210,7 @@ class Servicio
                         ciudad_origen = :ciudad_origen, direccion_origen = :direccion_origen,
                         ciudad_destino = :ciudad_destino, direccion_destino = :direccion_destino,
                         fecha_servicio = :fecha_servicio, hora_servicio = :hora_servicio,
+                        hora_llegada = :hora_llegada,
                         ticket = :ticket, flete = :flete, estado = :estado,
                         observaciones = :observaciones
                     WHERE id = :id';
@@ -238,7 +245,8 @@ class Servicio
                     pasajeros.nombre AS pasajero,
                     pasajeros.telefono AS telefono_pasajero,
                     conductores.nombre AS conductor,
-                    CONCAT(vehiculos.marca, ' ', vehiculos.modelo, ' - ', vehiculos.placa) AS vehiculo,
+                    vehiculos.tipo AS tipo_vehiculo,
+                    vehiculos.placa AS placa,
                     CONCAT(destinos.ciudad_origen, ' - ', destinos.ciudad_destino) AS destino,
                     destinos.tarifa
                 FROM servicios
@@ -263,6 +271,8 @@ class Servicio
         $servicio['origen'] = $unir($servicio['ciudad_origen'] ?? '', $servicio['direccion_origen'] ?? '');
         $servicio['destino_completo'] = $unir($servicio['ciudad_destino'] ?? '', $servicio['direccion_destino'] ?? '');
         $servicio['fecha_hora'] = trim(($servicio['fecha_servicio'] ?? '') . ' ' . substr((string) ($servicio['hora_servicio'] ?? ''), 0, 5));
+        $servicio['hora_salida'] = !empty($servicio['hora_servicio']) ? substr((string) $servicio['hora_servicio'], 0, 5) : '—';
+        $servicio['hora_llegada_legible'] = !empty($servicio['hora_llegada']) ? substr((string) $servicio['hora_llegada'], 0, 5) : '—';
         $servicio['flete_legible'] = $servicio['flete'] !== null && $servicio['flete'] !== ''
             ? '$' . number_format((float) $servicio['flete'], 0, ',', '.')
             : '—';

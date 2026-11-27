@@ -24,6 +24,7 @@ class VehiculoController
     {
         return $this->vehiculoModel->guardar(
             $_POST['placa'] ?? '',
+            $_POST['tipo'] ?? '',
             $_POST['marca'] ?? '',
             $_POST['modelo'] ?? '',
             $_POST['capacidad'] ?? '',
@@ -55,6 +56,7 @@ class VehiculoController
         $ok = $id && $id > 0 && $this->vehiculoModel->actualizar(
             $id,
             $_POST['placa'] ?? '',
+            $_POST['tipo'] ?? '',
             $_POST['marca'] ?? '',
             $_POST['modelo'] ?? '',
             $_POST['capacidad'] ?? '',

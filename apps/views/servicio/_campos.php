@@ -85,8 +85,12 @@ $sel = static function ($a, $b): string {
             <input type="date" id="fecha_servicio" name="fecha_servicio" value="<?= $h($s['fecha_servicio'] ?? '') ?>" required>
         </div>
         <div class="form-pair">
-            <label for="hora_servicio">Hora del servicio</label>
+            <label for="hora_servicio">Hora de salida</label>
             <input type="time" id="hora_servicio" name="hora_servicio" value="<?= $h(isset($s['hora_servicio']) ? substr((string) $s['hora_servicio'], 0, 5) : '') ?>" required>
+        </div>
+        <div class="form-pair">
+            <label for="hora_llegada">Hora de llegada</label>
+            <input type="time" id="hora_llegada" name="hora_llegada" value="<?= $h(!empty($s['hora_llegada']) ? substr((string) $s['hora_llegada'], 0, 5) : '') ?>" required>
         </div>
         <div class="form-pair">
             <label for="ticket">Ticket</label>
@@ -112,11 +116,11 @@ $sel = static function ($a, $b): string {
             </select>
         </div>
         <div class="form-pair">
-            <label for="vehiculo_id">Vehículo</label>
-            <select id="vehiculo_id" name="vehiculo_id" required>
-                <option value="">Selecciona un vehículo</option>
-                <?php foreach ($vehiculos as $vehiculo): ?>
-                    <option value="<?= (int) $vehiculo['id'] ?>" <?= $sel($vehiculo['id'], $s['vehiculo_id'] ?? 0) ?>><?= $h($vehiculo['placa'] . ' - ' . $vehiculo['marca'] . ' ' . $vehiculo['modelo']) ?></option>
+            <label for="tipo_vehiculo">Tipo de vehículo</label>
+            <select id="tipo_vehiculo" data-filtra="vehiculo_id">
+                <option value="">Todos los tipos</option>
+                <?php foreach (Vehiculo::TIPOS as $tipo): ?>
+                    <option value="<?= $h($tipo) ?>" <?= ($s['tipo_vehiculo'] ?? '') === $tipo ? 'selected' : '' ?>><?= $h($tipo) ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
@@ -124,6 +128,18 @@ $sel = static function ($a, $b): string {
 
     <label for="estado">Estado</label>
     <input type="text" id="estado" name="estado" maxlength="30" value="<?= $h($s['estado'] ?? '') ?>" placeholder="Estado del servicio" required>
+</fieldset>
+
+<fieldset class="form-section">
+    <legend>Placa</legend>
+    <label for="vehiculo_id">Placa del vehículo</label>
+    <select id="vehiculo_id" name="vehiculo_id" required>
+        <option value="">Selecciona la placa</option>
+        <?php foreach ($vehiculos as $vehiculo): ?>
+            <option value="<?= (int) $vehiculo['id'] ?>" data-tipo="<?= $h($vehiculo['tipo'] ?? '') ?>" <?= $sel($vehiculo['id'], $s['vehiculo_id'] ?? 0) ?>><?= $h($vehiculo['placa']) ?> · <?= $h($vehiculo['tipo'] ?? '') ?></option>
+        <?php endforeach; ?>
+    </select>
+    <p class="form-hint">Elige primero el tipo de vehículo para ver solo sus placas.</p>
 </fieldset>
 
 <label for="observaciones">Observaciones</label>

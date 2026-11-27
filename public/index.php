@@ -332,7 +332,7 @@ switch ($uri) {
                     'ruta' => 'servicio',
                     'clave' => 'servicios',
                     'registros' => $servicios,
-                    'columnas' => ['ID' => 'id', 'Cliente' => 'cliente', 'Nombre' => 'pasajero', 'Teléfono' => 'telefono', 'Origen' => 'origen', 'Destino' => 'destino_completo', 'Fecha y hora' => 'fecha_hora', 'Ticket' => 'ticket', 'Flete' => 'flete_legible', 'Conductor' => 'conductor', 'Vehículo' => 'vehiculo', 'Estado' => 'estado', 'Observaciones' => 'observaciones_corta'],
+                    'columnas' => ['ID' => 'id', 'Cliente' => 'cliente', 'Nombre' => 'pasajero', 'Teléfono' => 'telefono', 'Origen' => 'origen', 'Destino' => 'destino_completo', 'Fecha' => 'fecha_servicio', 'Hora de salida' => 'hora_salida', 'Hora de llegada' => 'hora_llegada_legible', 'Ticket' => 'ticket', 'Flete' => 'flete_legible', 'Conductor' => 'conductor', 'Tipo de vehículo' => 'tipo_vehiculo', 'Placa' => 'placa', 'Estado' => 'estado', 'Observaciones' => 'observaciones_corta'],
                 ],
                 [
                     'titulo' => 'Destinos',
@@ -346,7 +346,7 @@ switch ($uri) {
                     'ruta' => 'vehiculo',
                     'clave' => 'vehiculos',
                     'registros' => $vehiculos,
-                    'columnas' => ['ID' => 'id', 'Placa' => 'placa', 'Marca' => 'marca', 'Modelo' => 'modelo', 'Capacidad' => 'capacidad', 'Conductor' => 'conductor'],
+                    'columnas' => ['ID' => 'id', 'Placa' => 'placa', 'Tipo' => 'tipo', 'Marca' => 'marca', 'Modelo' => 'modelo', 'Capacidad' => 'capacidad', 'Conductor' => 'conductor'],
                 ],
             ];
 
