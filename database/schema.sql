@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS conductores (
 CREATE TABLE IF NOT EXISTS destinos (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     ciudad_origen VARCHAR(120) NOT NULL,
+    direccion_origen VARCHAR(150) NULL,
     ciudad_destino VARCHAR(120) NOT NULL,
     direccion_destino VARCHAR(255) NULL,
     tarifa DECIMAL(10, 2) NOT NULL,

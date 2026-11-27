@@ -14,6 +14,9 @@ $e = static function ($valor): string {
     <label for="destino_ciudad_origen">Ciudad de origen</label>
     <input type="text" id="destino_ciudad_origen" name="ciudad_origen" maxlength="100" value="<?= $e($destino['ciudad_origen']) ?>" required>
 
+    <label for="destino_direccion_origen">Dirección de origen (opcional)</label>
+    <input type="text" id="destino_direccion_origen" name="direccion_origen" maxlength="150" value="<?= $e($destino['direccion_origen'] ?? '') ?>" placeholder="Punto de recogida habitual">
+
     <label for="destino_ciudad_destino">Ciudad de destino</label>
     <input type="text" id="destino_ciudad_destino" name="ciudad_destino" maxlength="100" value="<?= $e($destino['ciudad_destino']) ?>" required>
 

@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/Vehiculo.php';
+
 class Servicio
 {
     private $conexion;
@@ -246,6 +248,7 @@ class Servicio
                     pasajeros.telefono AS telefono_pasajero,
                     conductores.nombre AS conductor,
                     vehiculos.tipo AS tipo_vehiculo,
+                    vehiculos.capacidad AS capacidad_vehiculo,
                     vehiculos.placa AS placa,
                     CONCAT(destinos.ciudad_origen, ' - ', destinos.ciudad_destino) AS destino,
                     destinos.tarifa
@@ -271,6 +274,9 @@ class Servicio
         $servicio['origen'] = $unir($servicio['ciudad_origen'] ?? '', $servicio['direccion_origen'] ?? '');
         $servicio['destino_completo'] = $unir($servicio['ciudad_destino'] ?? '', $servicio['direccion_destino'] ?? '');
         $servicio['fecha_hora'] = trim(($servicio['fecha_servicio'] ?? '') . ' ' . substr((string) ($servicio['hora_servicio'] ?? ''), 0, 5));
+        $servicio['direccion_origen_legible'] = trim((string) ($servicio['direccion_origen'] ?? '')) !== '' ? $servicio['direccion_origen'] : '—';
+        $servicio['direccion_destino_legible'] = trim((string) ($servicio['direccion_destino'] ?? '')) !== '' ? $servicio['direccion_destino'] : '—';
+        $servicio['tipo_capacidad'] = Vehiculo::etiquetaTipo($servicio['tipo_vehiculo'] ?? '', $servicio['capacidad_vehiculo'] ?? 0);
         $servicio['hora_salida'] = !empty($servicio['hora_servicio']) ? substr((string) $servicio['hora_servicio'], 0, 5) : '—';
         $servicio['hora_llegada_legible'] = !empty($servicio['hora_llegada']) ? substr((string) $servicio['hora_llegada'], 0, 5) : '—';
         $servicio['flete_legible'] = $servicio['flete'] !== null && $servicio['flete'] !== ''

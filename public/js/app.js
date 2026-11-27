@@ -27,6 +27,7 @@ document.addEventListener('submit', (event) => {
                 return;
             }
             completarSiVacio(campo('ciudad_origen'), opcion.dataset.origen);
+            completarSiVacio(campo('direccion_origen'), opcion.dataset.direccionOrigen);
             completarSiVacio(campo('ciudad_destino'), opcion.dataset.destino);
             completarSiVacio(campo('direccion_destino'), opcion.dataset.direccion);
             completarSiVacio(campo('flete'), opcion.dataset.tarifa);
@@ -77,3 +78,29 @@ document.querySelectorAll('select[data-filtra]').forEach((filtro) => {
     });
     aplicarFiltro();
 });
+
+// Formulario de vehículo: sugiere las capacidades habituales según el tipo.
+(() => {
+    const tipo = document.getElementById('vehiculo_tipo');
+    const lista = document.getElementById('capacidades_sugeridas');
+    if (!tipo || !lista || !tipo.dataset.capacidades) {
+        return;
+    }
+    let capacidades = {};
+    try {
+        capacidades = JSON.parse(tipo.dataset.capacidades);
+    } catch (error) {
+        return;
+    }
+    const actualizar = () => {
+        lista.innerHTML = '';
+        (capacidades[tipo.value] || []).forEach((valor) => {
+            const opcion = document.createElement('option');
+            opcion.value = valor;
+            opcion.label = `${valor} pasajeros`;
+            lista.appendChild(opcion);
+        });
+    };
+    tipo.addEventListener('change', actualizar);
+    actualizar();
+})();

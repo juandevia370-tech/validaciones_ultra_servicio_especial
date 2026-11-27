@@ -9,6 +9,18 @@ $h = static function ($valor): string {
 $sel = static function ($a, $b): string {
     return (int) $a === (int) $b && (int) $a > 0 ? 'selected' : '';
 };
+// Combinaciones de tipo y capacidad existentes, p. ej. "Van|15" => "Van · 15 pasajeros".
+$tiposCapacidad = [];
+foreach ($vehiculos as $vehiculo) {
+    $clave = ($vehiculo['tipo'] ?? '') . '|' . (int) ($vehiculo['capacidad'] ?? 0);
+    $tiposCapacidad[$clave] = Vehiculo::etiquetaTipo($vehiculo['tipo'] ?? '', $vehiculo['capacidad'] ?? 0);
+}
+uksort($tiposCapacidad, static function ($a, $b) {
+    [$ta, $ca] = explode('|', $a);
+    [$tb, $cb] = explode('|', $b);
+    return [array_search($ta, Vehiculo::TIPOS, true), (int) $ca] <=> [array_search($tb, Vehiculo::TIPOS, true), (int) $cb];
+});
+$tipoActual = isset($s['tipo_vehiculo']) ? $s['tipo_vehiculo'] . '|' . (int) ($s['capacidad_vehiculo'] ?? 0) : '';
 ?>
 <fieldset class="form-section">
     <legend>Cliente y pasajero</legend>
@@ -48,6 +60,7 @@ $sel = static function ($a, $b): string {
             <option
                 value="<?= (int) $destino['id'] ?>"
                 data-origen="<?= $h($destino['ciudad_origen']) ?>"
+                data-direccion-origen="<?= $h($destino['direccion_origen'] ?? '') ?>"
                 data-destino="<?= $h($destino['ciudad_destino']) ?>"
                 data-direccion="<?= $h($destino['direccion_destino'] ?? '') ?>"
                 data-tarifa="<?= $h($destino['tarifa']) ?>"
@@ -55,7 +68,7 @@ $sel = static function ($a, $b): string {
             ><?= $h($destino['ciudad_origen'] . ' - ' . $destino['ciudad_destino']) ?></option>
         <?php endforeach; ?>
     </select>
-    <p class="form-hint">Al elegir la ruta se completan las ciudades, la dirección de destino y el flete; puedes ajustarlos.</p>
+    <p class="form-hint">Al elegir la ruta se completan las ciudades, las direcciones y el flete; puedes ajustarlos.</p>
 
     <div class="form-grid">
         <div class="form-pair">
@@ -119,8 +132,8 @@ $sel = static function ($a, $b): string {
             <label for="tipo_vehiculo">Tipo de vehículo</label>
             <select id="tipo_vehiculo" data-filtra="vehiculo_id">
                 <option value="">Todos los tipos</option>
-                <?php foreach (Vehiculo::TIPOS as $tipo): ?>
-                    <option value="<?= $h($tipo) ?>" <?= ($s['tipo_vehiculo'] ?? '') === $tipo ? 'selected' : '' ?>><?= $h($tipo) ?></option>
+                <?php foreach ($tiposCapacidad as $clave => $etiqueta): ?>
+                    <option value="<?= $h($clave) ?>" <?= $tipoActual === $clave ? 'selected' : '' ?>><?= $h($etiqueta) ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
@@ -136,7 +149,7 @@ $sel = static function ($a, $b): string {
     <select id="vehiculo_id" name="vehiculo_id" required>
         <option value="">Selecciona la placa</option>
         <?php foreach ($vehiculos as $vehiculo): ?>
-            <option value="<?= (int) $vehiculo['id'] ?>" data-tipo="<?= $h($vehiculo['tipo'] ?? '') ?>" <?= $sel($vehiculo['id'], $s['vehiculo_id'] ?? 0) ?>><?= $h($vehiculo['placa']) ?> · <?= $h($vehiculo['tipo'] ?? '') ?></option>
+            <option value="<?= (int) $vehiculo['id'] ?>" data-tipo="<?= $h(($vehiculo['tipo'] ?? '') . '|' . (int) ($vehiculo['capacidad'] ?? 0)) ?>" <?= $sel($vehiculo['id'], $s['vehiculo_id'] ?? 0) ?>><?= $h($vehiculo['placa']) ?> · <?= $h(Vehiculo::etiquetaTipo($vehiculo['tipo'] ?? '', $vehiculo['capacidad'] ?? 0)) ?></option>
         <?php endforeach; ?>
     </select>
     <p class="form-hint">Elige primero el tipo de vehículo para ver solo sus placas.</p>

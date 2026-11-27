@@ -4,6 +4,30 @@ class Vehiculo
 {
     public const TIPOS = ['Automóvil', 'Camioneta', 'Van', 'Buseta', 'Microbús', 'Bus'];
 
+    // Capacidades habituales (pasajeros) que se sugieren al registrar un vehículo.
+    public const CAPACIDADES_SUGERIDAS = [
+        'Automóvil' => [4],
+        'Camioneta' => [4, 5, 7],
+        'Van' => [11, 15, 17, 19],
+        'Buseta' => [19, 22, 25],
+        'Microbús' => [19, 24, 28],
+        'Bus' => [30, 40, 45],
+    ];
+
+    /**
+     * Tipo de vehículo con su capacidad, por ejemplo "Van · 15 pasajeros".
+     */
+    public static function etiquetaTipo($tipo, $capacidad)
+    {
+        $tipo = trim((string) $tipo);
+        $capacidad = (int) $capacidad;
+        if ($tipo === '') {
+            return '—';
+        }
+
+        return $capacidad > 0 ? $tipo . ' · ' . $capacidad . ' pasajeros' : $tipo;
+    }
+
     private $conexion;
 
     public function __construct($conexion)
@@ -115,7 +139,11 @@ class Vehiculo
                  ORDER BY vehiculos.id DESC'
             );
 
-            return $consulta->fetchAll(PDO::FETCH_ASSOC);
+            return array_map(static function ($vehiculo) {
+                $vehiculo['tipo_capacidad'] = self::etiquetaTipo($vehiculo['tipo'] ?? '', $vehiculo['capacidad'] ?? 0);
+
+                return $vehiculo;
+            }, $consulta->fetchAll(PDO::FETCH_ASSOC));
         } catch (PDOException $e) {
             error_log('Error al obtener los vehículos: ' . $e->getMessage());
             return [];

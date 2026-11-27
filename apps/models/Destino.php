@@ -9,11 +9,12 @@ class Destino
         $this->conexion = $conexion;
     }
 
-    public function guardar($ciudadOrigen, $ciudadDestino, $direccionDestino, $tarifa)
+    public function guardar($ciudadOrigen, $ciudadDestino, $direccionDestino, $tarifa, $direccionOrigen = '')
     {
         $ciudadOrigen = trim($ciudadOrigen);
         $ciudadDestino = trim($ciudadDestino);
         $direccionDestino = trim($direccionDestino);
+        $direccionOrigen = mb_substr(trim((string) $direccionOrigen), 0, 150);
         $tarifa = filter_var($tarifa, FILTER_VALIDATE_FLOAT);
 
         if ($ciudadOrigen === '' || $ciudadDestino === '' || $tarifa === false || $tarifa <= 0) {
@@ -22,12 +23,13 @@ class Destino
 
         try {
             $consulta = $this->conexion->prepare(
-                'INSERT INTO destinos (ciudad_origen, ciudad_destino, direccion_destino, tarifa)
-                 VALUES (:ciudad_origen, :ciudad_destino, :direccion_destino, :tarifa)'
+                'INSERT INTO destinos (ciudad_origen, direccion_origen, ciudad_destino, direccion_destino, tarifa)
+                 VALUES (:ciudad_origen, :direccion_origen, :ciudad_destino, :direccion_destino, :tarifa)'
             );
 
             return $consulta->execute([
                 ':ciudad_origen' => $ciudadOrigen,
+                ':direccion_origen' => $direccionOrigen !== '' ? $direccionOrigen : null,
                 ':ciudad_destino' => $ciudadDestino,
                 ':direccion_destino' => $direccionDestino !== '' ? $direccionDestino : null,
                 ':tarifa' => $tarifa,
@@ -38,11 +40,12 @@ class Destino
         }
     }
 
-    public function actualizar($id, $ciudadOrigen, $ciudadDestino, $direccionDestino, $tarifa)
+    public function actualizar($id, $ciudadOrigen, $ciudadDestino, $direccionDestino, $tarifa, $direccionOrigen = '')
     {
         $ciudadOrigen = trim($ciudadOrigen);
         $ciudadDestino = trim($ciudadDestino);
         $direccionDestino = trim($direccionDestino);
+        $direccionOrigen = mb_substr(trim((string) $direccionOrigen), 0, 150);
         $tarifa = filter_var($tarifa, FILTER_VALIDATE_FLOAT);
 
         if ($ciudadOrigen === '' || $ciudadDestino === '' || $tarifa === false || $tarifa <= 0) {
@@ -52,13 +55,15 @@ class Destino
         try {
             $consulta = $this->conexion->prepare(
                 'UPDATE destinos
-                 SET ciudad_origen = :ciudad_origen, ciudad_destino = :ciudad_destino,
+                 SET ciudad_origen = :ciudad_origen, direccion_origen = :direccion_origen,
+                     ciudad_destino = :ciudad_destino,
                      direccion_destino = :direccion_destino, tarifa = :tarifa
                  WHERE id = :id'
             );
 
             return $consulta->execute([
                 ':ciudad_origen' => $ciudadOrigen,
+                ':direccion_origen' => $direccionOrigen !== '' ? $direccionOrigen : null,
                 ':ciudad_destino' => $ciudadDestino,
                 ':direccion_destino' => $direccionDestino !== '' ? $direccionDestino : null,
                 ':tarifa' => $tarifa,

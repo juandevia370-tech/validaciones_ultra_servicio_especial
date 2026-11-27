@@ -15,7 +15,7 @@ $e = static function ($valor): string {
     <input type="text" id="vehiculo_placa" name="placa" maxlength="10" value="<?= $e($vehiculo['placa']) ?>" required>
 
     <label for="vehiculo_tipo">Tipo de vehículo</label>
-    <select id="vehiculo_tipo" name="tipo" required>
+    <select id="vehiculo_tipo" name="tipo" data-capacidades="<?= htmlspecialchars(json_encode(Vehiculo::CAPACIDADES_SUGERIDAS, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') ?>" required>
         <option value="">Selecciona el tipo</option>
         <?php foreach (Vehiculo::TIPOS as $tipo): ?>
             <option value="<?= $e($tipo) ?>" <?= ($vehiculo['tipo'] ?? '') === $tipo ? 'selected' : '' ?>><?= $e($tipo) ?></option>
@@ -29,7 +29,8 @@ $e = static function ($valor): string {
     <input type="text" id="vehiculo_modelo" name="modelo" maxlength="50" value="<?= $e($vehiculo['modelo']) ?>" required>
 
     <label for="vehiculo_capacidad">Capacidad de pasajeros</label>
-    <input type="number" id="vehiculo_capacidad" name="capacidad" min="1" value="<?= (int) $vehiculo['capacidad'] ?>" required>
+    <datalist id="capacidades_sugeridas"></datalist>
+    <input type="number" id="vehiculo_capacidad" name="capacidad" min="1" list="capacidades_sugeridas" value="<?= (int) $vehiculo['capacidad'] ?>" required>
 
     <label for="vehiculo_conductor_id">Conductor asignado</label>
     <select id="vehiculo_conductor_id" name="conductor_id" required>
@@ -45,3 +46,4 @@ $e = static function ($valor): string {
     <a href="<?= htmlspecialchars(app_url('/'), ENT_QUOTES, 'UTF-8') ?>">Cancelar</a>
 </form>
 </main>
+<script src="<?= htmlspecialchars(app_url('/js/app.js'), ENT_QUOTES, 'UTF-8') ?>" defer></script>

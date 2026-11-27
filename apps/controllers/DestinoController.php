@@ -22,7 +22,8 @@ class DestinoController
             $_POST['ciudad_origen'] ?? '',
             $_POST['ciudad_destino'] ?? '',
             $_POST['direccion_destino'] ?? '',
-            $_POST['tarifa'] ?? ''
+            $_POST['tarifa'] ?? '',
+            $_POST['direccion_origen'] ?? ''
         );
     }
 
@@ -51,7 +52,8 @@ class DestinoController
             $_POST['ciudad_origen'] ?? '',
             $_POST['ciudad_destino'] ?? '',
             $_POST['direccion_destino'] ?? '',
-            $_POST['tarifa'] ?? ''
+            $_POST['tarifa'] ?? '',
+            $_POST['direccion_origen'] ?? ''
         );
 
         header('Location: ' . app_url('/?msg=' . ($ok ? 'editado' : 'error')));
