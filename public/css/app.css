@@ -742,14 +742,14 @@ button.auth-submit:hover {
     border-top: 4px solid var(--brand-700);
     border-radius: 18px;
     background:
-        url("../img/logo-ultra-simbolo.png") no-repeat right clamp(18px, 4vw, 32px) top clamp(18px, 4vw, 28px) / 54px auto,
+        url("../img/logo-ultra-3d-claro.webp") no-repeat right clamp(18px, 4vw, 32px) top clamp(14px, 4vw, 22px) / 70px auto,
         var(--surface);
     box-shadow: var(--shadow-sm);
 }
 
 .crud-page h2 {
     margin: 0 0 24px;
-    padding-right: 70px;
+    padding-right: 90px;
     color: var(--ink);
     font-size: 22px;
     letter-spacing: -.03em;
@@ -971,4 +971,16 @@ button:disabled {
 
 .auth-logo-3d {
     width: 200px;
+}
+
+/* Logo 3D en la barra lateral */
+.app-brand-logo-3d {
+    width: 168px;
+    filter: drop-shadow(0 6px 18px rgba(130, 64, 166, .45));
+}
+
+@media (max-width: 900px) {
+    .app-brand-logo-3d {
+        width: 92px;
+    }
 }

@@ -20,7 +20,7 @@ $emailUsuario = $authUser['email'] ?? 'Usuario autenticado';
     <div class="app-shell">
         <aside class="app-sidebar">
             <a class="app-brand" href="<?= $escape(app_url('/')) ?>">
-                <img class="app-brand-logo" src="<?= $escape(app_url('/img/logo-ultra-blanco.png')) ?>" alt="ULTRA Servicio Especial" width="120" height="113">
+                <img class="app-brand-logo app-brand-logo-3d" src="<?= $escape(app_url('/img/logo-ultra-3d.webp')) ?>" alt="ULTRA Servicio Especial" width="560" height="488">
                 <span class="app-brand-text">Sistema de transporte</span>
             </a>
 
